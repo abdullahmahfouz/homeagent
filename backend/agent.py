@@ -83,8 +83,8 @@ NEIGHBORHOOD_DATA = {
 def search_listings(
     max_price: int = 1000000,
     min_beds: int = 1,
-    neighborhoods: list[str] = None,
-    property_type: str = None,
+    neighborhoods: list[str] | None = None,
+    property_type: str | None = None,
     min_sqft: int = 0,
 ) -> dict:
     results = [l for l in MOCK_LISTINGS if l["price"] <= max_price and l["beds"] >= min_beds]
