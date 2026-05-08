@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 """
-HomeAgent CLI — Agentic real estate assistant for GTA
+HomeAgent CLI — Agentic real estate assistant for GTA (Gemini)
 Usage: python agent.py
 """
 
-import anthropic
 import json
-import math
 import os
 import sys
 from typing import Any
 
 from dotenv import load_dotenv
+from google import genai
+from google.genai import types
 
 load_dotenv()
+
+MODEL = "gemini-2.5-flash"
 
 # ─── Mock data (swap for Repliers.io later) ───────────────────────────────────
 MOCK_LISTINGS = [
@@ -76,23 +78,15 @@ NEIGHBORHOOD_DATA = {
     "etobicoke":        {"walk": 65, "transit": 70, "school": "Various (7.5–8.3/10)",    "commute_min": 40, "avg_price_sqft": 520},
 }
 
-# ─── Tool functions ────────────────────────────────────────────────────────────
+# ─── Tool functions ───────────────────────────────────────────────────────────
 
 def search_listings(
     max_price: int = 1000000,
     min_beds: int = 1,
     neighborhoods: list[str] = None,
     property_type: str = None,
-    min_sqft: int = 0
+    min_sqft: int = 0,
 ) -> dict:
-    """
-    TODO: Replace with Repliers.io API call:
-        GET https://api.repliers.io/listings
-            ?maxPrice={max_price}
-            &minBeds={min_beds}
-            &city=Toronto
-        headers: {"repliers-api-key": os.getenv("REPLIERS_API_KEY")}
-    """
     results = [l for l in MOCK_LISTINGS if l["price"] <= max_price and l["beds"] >= min_beds]
 
     if neighborhoods:
@@ -109,16 +103,10 @@ def search_listings(
 
 
 def get_neighborhood_scores(neighborhood: str) -> dict:
-    """
-    TODO: Replace with Walk Score API call:
-        GET https://api.walkscore.com/score?
-            wsapikey={key}&address={address}&city=Toronto
-    """
     key = neighborhood.lower().strip()
     data = NEIGHBORHOOD_DATA.get(key)
 
     if not data:
-        # Fuzzy match
         for k, v in NEIGHBORHOOD_DATA.items():
             if k in key or key in k:
                 data = v
@@ -133,7 +121,7 @@ def get_neighborhood_scores(neighborhood: str) -> dict:
         "transit_score": data["transit"],
         "top_school": data["school"],
         "commute_to_downtown_min": data["commute_min"],
-        "avg_price_per_sqft": data["avg_price_sqft"]
+        "avg_price_per_sqft": data["avg_price_sqft"],
     }
 
 
@@ -141,13 +129,12 @@ def calculate_mortgage(
     price: int,
     down_payment_pct: float = 20.0,
     amortization_years: int = 25,
-    annual_rate_pct: float = 5.49
+    annual_rate_pct: float = 5.49,
 ) -> dict:
     """Canadian mortgage with CMHC insurance rules."""
     down = price * (down_payment_pct / 100)
     principal = price - down
 
-    # CMHC premium (required if down < 20%)
     cmhc = 0
     if down_payment_pct < 20:
         ltv = principal / price
@@ -162,12 +149,11 @@ def calculate_mortgage(
     total_principal = principal + cmhc
     monthly_rate = (annual_rate_pct / 100) / 12
     n = amortization_years * 12
-    monthly = total_principal * (monthly_rate * (1 + monthly_rate)**n) / ((1 + monthly_rate)**n - 1)
+    monthly = total_principal * (monthly_rate * (1 + monthly_rate) ** n) / ((1 + monthly_rate) ** n - 1)
 
-    # Stress test (qualifying rate = contract + 2%)
     stress_rate = (annual_rate_pct + 2.0) / 100 / 12
-    stress_monthly = total_principal * (stress_rate * (1 + stress_rate)**n) / ((1 + stress_rate)**n - 1)
-    min_income = stress_monthly * 12 / 0.32  # GDS ratio 32%
+    stress_monthly = total_principal * (stress_rate * (1 + stress_rate) ** n) / ((1 + stress_rate) ** n - 1)
+    min_income = stress_monthly * 12 / 0.32  # GDS 32%
 
     return {
         "price": price,
@@ -179,14 +165,11 @@ def calculate_mortgage(
         "amortization_years": amortization_years,
         "rate_pct": annual_rate_pct,
         "stress_test_monthly": round(stress_monthly),
-        "min_annual_income_needed": round(min_income)
+        "min_annual_income_needed": round(min_income),
     }
 
 
 def get_market_trends(neighborhood: str) -> dict:
-    """
-    TODO: Replace with Repliers.io market stats endpoint.
-    """
     trends = {
         "rosedale":          {"avg_price": 1100000, "yoy_change_pct": 3.2,  "avg_days_on_market": 18, "price_sqft": 720},
         "annex":             {"avg_price": 950000,  "yoy_change_pct": 4.1,  "avg_days_on_market": 14, "price_sqft": 780},
@@ -201,76 +184,80 @@ def get_market_trends(neighborhood: str) -> dict:
     return {"neighborhood": neighborhood, **data}
 
 
-# ─── Tool dispatcher ───────────────────────────────────────────────────────────
+# ─── Tool declarations (Gemini schema) ────────────────────────────────────────
 
-TOOLS = [
+FUNCTION_DECLARATIONS = [
     {
         "name": "search_listings",
-        "description": "Search Toronto MLS listings by budget, bedrooms, neighborhood, and property type",
-        "input_schema": {
+        "description": "Search Toronto MLS listings by budget, bedrooms, neighborhood, and property type.",
+        "parameters": {
             "type": "object",
             "properties": {
-                "max_price":      {"type": "integer", "description": "Maximum price in CAD"},
-                "min_beds":       {"type": "integer", "description": "Minimum bedrooms"},
-                "neighborhoods":  {"type": "array", "items": {"type": "string"}, "description": "List of Toronto neighborhoods"},
-                "property_type":  {"type": "string", "description": "condo, semi-detached, detached, townhouse"},
-                "min_sqft":       {"type": "integer", "description": "Minimum square footage"}
-            }
-        }
+                "max_price":     {"type": "integer", "description": "Maximum price in CAD"},
+                "min_beds":      {"type": "integer", "description": "Minimum bedrooms"},
+                "neighborhoods": {"type": "array",  "items": {"type": "string"}, "description": "List of Toronto neighborhoods"},
+                "property_type": {"type": "string", "description": "condo, semi-detached, detached, townhouse"},
+                "min_sqft":      {"type": "integer", "description": "Minimum square footage"},
+            },
+        },
     },
     {
         "name": "get_neighborhood_scores",
-        "description": "Get walk score, transit score, school ratings, and commute time for a Toronto neighborhood",
-        "input_schema": {
+        "description": "Get walk score, transit score, school ratings, and commute time for a Toronto neighborhood.",
+        "parameters": {
             "type": "object",
             "required": ["neighborhood"],
             "properties": {
-                "neighborhood": {"type": "string", "description": "Toronto neighborhood name"}
-            }
-        }
+                "neighborhood": {"type": "string", "description": "Toronto neighborhood name"},
+            },
+        },
     },
     {
         "name": "calculate_mortgage",
-        "description": "Calculate Canadian mortgage with CMHC insurance, stress test, and minimum income required",
-        "input_schema": {
+        "description": "Calculate Canadian mortgage with CMHC insurance, stress test, and minimum income required.",
+        "parameters": {
             "type": "object",
             "required": ["price"],
             "properties": {
-                "price":               {"type": "integer",  "description": "Property price in CAD"},
-                "down_payment_pct":    {"type": "number",   "description": "Down payment percentage (5–50)"},
-                "amortization_years":  {"type": "integer",  "description": "Amortization period (15, 20, 25, 30)"},
-                "annual_rate_pct":     {"type": "number",   "description": "Annual interest rate percentage"}
-            }
-        }
+                "price":              {"type": "integer", "description": "Property price in CAD"},
+                "down_payment_pct":   {"type": "number",  "description": "Down payment percentage (5-50)"},
+                "amortization_years": {"type": "integer", "description": "Amortization period (15, 20, 25, 30)"},
+                "annual_rate_pct":    {"type": "number",  "description": "Annual interest rate percentage"},
+            },
+        },
     },
     {
         "name": "get_market_trends",
-        "description": "Get average prices, year-over-year change, and days on market for a Toronto neighborhood",
-        "input_schema": {
+        "description": "Get average prices, year-over-year change, and days on market for a Toronto neighborhood.",
+        "parameters": {
             "type": "object",
             "required": ["neighborhood"],
             "properties": {
-                "neighborhood": {"type": "string"}
-            }
-        }
-    }
+                "neighborhood": {"type": "string"},
+            },
+        },
+    },
 ]
 
+TOOL_FUNCTIONS = {
+    "search_listings": search_listings,
+    "get_neighborhood_scores": get_neighborhood_scores,
+    "calculate_mortgage": calculate_mortgage,
+    "get_market_trends": get_market_trends,
+}
 
-def dispatch_tool(name: str, inputs: dict) -> Any:
-    if name == "search_listings":
-        return search_listings(**inputs)
-    elif name == "get_neighborhood_scores":
-        return get_neighborhood_scores(**inputs)
-    elif name == "calculate_mortgage":
-        return calculate_mortgage(**inputs)
-    elif name == "get_market_trends":
-        return get_market_trends(**inputs)
-    else:
+
+def dispatch_tool(name: str, args: dict) -> Any:
+    fn = TOOL_FUNCTIONS.get(name)
+    if not fn:
         return {"error": f"Unknown tool: {name}"}
+    try:
+        return fn(**args)
+    except TypeError as e:
+        return {"error": f"Bad args for {name}: {e}"}
 
 
-# ─── Agent loop ────────────────────────────────────────────────────────────────
+# ─── Agent loop ───────────────────────────────────────────────────────────────
 
 SYSTEM = """You are HomeAgent, an expert real estate assistant specializing in the Greater Toronto Area.
 
@@ -288,60 +275,67 @@ Format your final response clearly:
 Be specific, confident, and concise. Use real Toronto context."""
 
 
-def run_agent(user_message: str, history: list) -> tuple[str, list]:
+def run_agent(client: genai.Client, user_message: str, history: list) -> tuple[str, list]:
     """Run one turn of the agent loop. Returns (response_text, updated_history)."""
-    client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
-    messages = history + [{"role": "user", "content": user_message}]
+    contents = list(history) + [
+        types.Content(role="user", parts=[types.Part(text=user_message)])
+    ]
+
+    config = types.GenerateContentConfig(
+        system_instruction=SYSTEM,
+        tools=[types.Tool(function_declarations=FUNCTION_DECLARATIONS)],
+        automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
+        temperature=0.3,
+    )
 
     print("\n  🤔 Thinking...", flush=True)
 
     while True:
-        response = client.messages.create(
-            model="claude-opus-4-5",
-            max_tokens=2048,
-            system=SYSTEM,
-            tools=TOOLS,
-            messages=messages
+        response = client.models.generate_content(
+            model=MODEL,
+            contents=contents,
+            config=config,
         )
 
-        # Append assistant turn to messages
-        messages.append({"role": "assistant", "content": response.content})
+        candidate = response.candidates[0]
+        contents.append(candidate.content)
 
-        # If no tool calls — we're done
-        if response.stop_reason == "end_turn":
-            text = next((b.text for b in response.content if hasattr(b, "text")), "")
-            return text, messages
+        function_calls = response.function_calls or []
 
-        # Execute tool calls
-        tool_results = []
-        for block in response.content:
-            if block.type == "tool_use":
-                print(f"  ⚡ {block.name}({json.dumps(block.input, separators=(',',':'))})", flush=True)
-                result = dispatch_tool(block.name, block.input)
-                tool_results.append({
-                    "type": "tool_result",
-                    "tool_use_id": block.id,
-                    "content": json.dumps(result)
-                })
+        if not function_calls:
+            text = response.text or ""
+            return text, contents
 
-        messages.append({"role": "user", "content": tool_results})
+        function_response_parts = []
+        for fc in function_calls:
+            args = dict(fc.args or {})
+            print(f"  ⚡ {fc.name}({json.dumps(args, separators=(',', ':'))})", flush=True)
+            result = dispatch_tool(fc.name, args)
+            function_response_parts.append(
+                types.Part.from_function_response(name=fc.name, response={"result": result})
+            )
+
+        contents.append(types.Content(role="user", parts=function_response_parts))
 
 
 # ─── CLI ──────────────────────────────────────────────────────────────────────
 
 def main():
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        print("❌  Set ANTHROPIC_API_KEY environment variable first")
-        print("    export ANTHROPIC_API_KEY=sk-ant-...")
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        print("❌  Set GEMINI_API_KEY in backend/.env")
+        print("    GEMINI_API_KEY=AIza...")
         sys.exit(1)
+
+    client = genai.Client(api_key=api_key)
 
     print("\n╔═══════════════════════════════════════╗")
     print("║       HomeAgent — GTA Real Estate     ║")
     print("║  Type your search. 'quit' to exit.    ║")
     print("╚═══════════════════════════════════════╝\n")
 
-    history = []
+    history: list = []
 
     while True:
         try:
@@ -356,7 +350,12 @@ def main():
             print("Goodbye!")
             break
 
-        response, history = run_agent(user_input, history)
+        try:
+            response, history = run_agent(client, user_input, history)
+        except Exception as e:
+            print(f"\n❌  Error: {e}\n")
+            continue
+
         print(f"\nHomeAgent:\n{response}\n")
         print("─" * 60)
 
