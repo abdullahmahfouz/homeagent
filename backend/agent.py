@@ -83,21 +83,68 @@ NEIGHBORHOOD_DATA = {
 def search_listings(
     max_price: int = 1000000,
     min_beds: int = 1,
-    neighborhoods: list[str] | None = None,
-    property_type: str | None = None,
-    min_sqft: int = 0,
+    neighborhoods: list = None,
+    property_type: str = None,
+    min_sqft: int = 0
 ) -> dict:
-    results = [l for l in MOCK_LISTINGS if l["price"] <= max_price and l["beds"] >= min_beds]
+    api_key = os.getenv("REPLIERS_API_KEY")
 
-    if neighborhoods:
-        normalized = [n.lower() for n in neighborhoods]
-        results = [l for l in results if any(n in l["neighborhood"].lower() for n in normalized)]
+    if not api_key:
+        # Fall back to mock data for development
+        results = [
+            l for l in MOCK_LISTINGS
+            if l["price"] <= max_price
+            and l["beds"] >= min_beds
+            and l["sqft"] >= min_sqft
+            and (property_type is None or l["property_type"] == property_type)
+            and (
+                neighborhoods is None
+                or any(n.lower() in l["neighborhood"].lower() for n in neighborhoods)
+            )
+        ][:5]
+        return {"count": len(results), "listings": results, "source": "mock"}
 
+    import requests
+    params = {
+        "maxPrice": max_price,
+        "minBeds": min_beds,
+        "city": "Toronto",
+        "listings": "true",
+    }
     if property_type:
-        results = [l for l in results if property_type.lower() in l["property_type"].lower()]
+        params["type"] = property_type
+    if neighborhoods:
+        params["area"] = neighborhoods[0]
 
-    if min_sqft:
-        results = [l for l in results if l["sqft"] >= min_sqft]
+    response = requests.get(
+        "https://api.repliers.io/listings",
+        params=params,
+        headers={"repliers-api-key": api_key}
+    )
+    if response.status_code != 200:
+        return {
+            "error": f"Repliers API returned {response.status_code}: {response.text[:200]}",
+            "count": 0,
+            "listings": [],
+        }
+    data = response.json()
+    if isinstance(data, list):
+        listings = data[:5]
+    else:
+        listings = data.get("listings", [])[:5]
+
+    results = []
+    for l in listings:
+        results.append({
+            "id": l.get("mlsNumber"),
+            "address": f"{l.get('address', {}).get('streetNumber','')} {l.get('address', {}).get('streetName','')}",
+            "neighborhood": l.get("address", {}).get("neighborhood", "Toronto"),
+            "price": l.get("listPrice", 0),
+            "beds": l.get("details", {}).get("numBedrooms", 0),
+            "baths": l.get("details", {}).get("numBathrooms", 0),
+            "sqft": l.get("details", {}).get("sqft", 0),
+            "property_type": l.get("details", {}).get("propertyType", ""),
+        })
 
     return {"count": len(results), "listings": results}
 
@@ -324,7 +371,7 @@ def run_agent(client: genai.Client, user_message: str, history: list) -> tuple[s
 def main():
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
-        print("❌  Set GEMINI_API_KEY in backend/.env")
+        print(" Set GEMINI_API_KEY in backend/.env")
         print("    GEMINI_API_KEY=AIza...")
         sys.exit(1)
 
