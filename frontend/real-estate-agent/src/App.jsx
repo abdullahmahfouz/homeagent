@@ -1,579 +1,1016 @@
 import { useState, useRef, useEffect } from "react";
-import { sendMessage as apiSend } from "./api.js";
+import { sendMessage as apiSend, resetSession } from "./api.js";
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..600;1,9..40,300..600&family=Source+Serif+4:opsz,wght@8..60,400..600&display=swap');
 
   :root {
-    --bg: #0f0e0c;
-    --surface: #1a1916;
-    --surface2: #232220;
-    --border: rgba(255,255,255,0.08);
-    --border2: rgba(255,255,255,0.14);
-    --cream: #f0ead8;
-    --cream-dim: rgba(240,234,216,0.55);
-    --cream-faint: rgba(240,234,216,0.12);
-    --accent: #c8a96e;
-    --accent-dim: rgba(200,169,110,0.2);
-    --green: #5a9e78;
-    --green-dim: rgba(90,158,120,0.18);
-    --red: #c06060;
-    --text: #e8e2d4;
-    --text-dim: rgba(232,226,212,0.5);
-    --text-faint: rgba(232,226,212,0.28);
-    --radius: 12px;
-    --radius-sm: 8px;
+    --bg:            #F4F1E8;
+    --bg-2:          #EFEBDE;
+    --surface:       #FCFAF3;
+    --surface-2:     #F8F5EB;
+    --surface-3:     #EAE4D2;
+    --border:        #E0DACA;
+    --border-strong: #CFC8B5;
+    --ink:           #1F1B14;
+    --ink-2:         #3A352A;
+    --ink-dim:       #6B6457;
+    --ink-faint:     #9A9384;
+    --ink-ghost:     #C5BFB1;
+
+    --accent:        #C4633C;
+    --accent-bright: #D97757;
+    --accent-deep:   #A04E2C;
+    --accent-soft:   rgba(196,99,60,0.08);
+    --accent-mid:    rgba(196,99,60,0.16);
+
+    --pos:           #5C8C6A;
+    --pos-soft:      rgba(92,140,106,0.14);
+
+    --shadow-sm: 0 1px 2px rgba(31,27,20,0.04);
+    --shadow:    0 4px 16px -6px rgba(31,27,20,0.10), 0 1px 2px rgba(31,27,20,0.04);
+    --shadow-lg: 0 18px 40px -16px rgba(31,27,20,0.18), 0 2px 6px rgba(31,27,20,0.06);
+
+    --r-sm: 6px;
+    --r:    10px;
+    --r-md: 14px;
+    --r-lg: 20px;
+    --r-xl: 28px;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body, #root { height: 100%; }
 
   body {
     background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
+    color: var(--ink);
+    font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
     font-size: 15px;
-    line-height: 1.6;
-    min-height: 100vh;
-  }
-
-  .app {
-    display: grid;
-    grid-template-columns: 340px 1fr;
-    grid-template-rows: 56px 1fr;
-    height: 100vh;
+    line-height: 1.55;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'ss01', 'cv11';
     overflow: hidden;
   }
 
-  /* ── Header ── */
-  .header {
-    grid-column: 1 / -1;
-    display: flex;
-    align-items: center;
-    padding: 0 24px;
-    border-bottom: 1px solid var(--border);
+  ::selection { background: var(--accent-mid); color: var(--ink); }
+
+  button { font: inherit; color: inherit; }
+
+  .app {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    height: 100vh;
+    overflow: hidden;
     background: var(--bg);
-    gap: 12px;
-    z-index: 10;
   }
-  .header-logo {
-    font-family: 'Playfair Display', serif;
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--cream);
-    letter-spacing: -0.3px;
-  }
-  .header-logo span { color: var(--accent); font-style: italic; }
-  .header-badge {
-    font-size: 11px;
-    font-weight: 500;
-    padding: 3px 8px;
-    border-radius: 20px;
-    background: var(--accent-dim);
-    color: var(--accent);
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-  }
-  .header-right {
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .status-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--green);
-    box-shadow: 0 0 6px var(--green);
-  }
-  .status-label { font-size: 12px; color: var(--text-dim); }
 
   /* ── Sidebar ── */
   .sidebar {
     border-right: 1px solid var(--border);
-    overflow-y: auto;
-    padding: 20px 16px;
+    background: var(--bg-2);
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    background: var(--surface);
-  }
-  .sidebar::-webkit-scrollbar { width: 4px; }
-  .sidebar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-
-  .sidebar-section { display: flex; flex-direction: column; gap: 8px; }
-  .sidebar-label {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--text-faint);
-    padding: 0 4px;
-  }
-
-  /* Property card */
-  .property-card {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px;
-    cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
-    position: relative;
     overflow: hidden;
   }
-  .property-card:hover { border-color: var(--border2); background: #2a2825; }
-  .property-card.active { border-color: var(--accent); }
-  .property-card.active::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 3px;
-    background: var(--accent);
-    border-radius: 3px 0 0 3px;
+  .side-head {
+    padding: 18px 18px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .brand-mark {
+    width: 26px; height: 26px;
+    border-radius: 7px;
+    background: var(--ink);
+    color: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow-sm);
+  }
+  .brand-mark svg { width: 16px; height: 16px; }
+  .brand-name {
+    font-weight: 500;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  .new-chat {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink-dim);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.18s;
+  }
+  .new-chat:hover { background: var(--surface-2); color: var(--ink); border-color: var(--border-strong); }
+  .new-chat svg { width: 14px; height: 14px; }
+
+  .side-section {
+    padding: 6px 12px 0;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .side-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    color: var(--ink-faint);
+    padding: 8px 8px 6px;
+    text-transform: uppercase;
   }
 
-  .prop-img {
-    width: 100%; height: 120px;
-    border-radius: var(--radius-sm);
-    object-fit: cover;
-    margin-bottom: 10px;
-    background: var(--surface);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 32px;
+  .side-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 12px 16px;
+    display: flex; flex-direction: column; gap: 4px;
   }
-  .prop-address {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--cream);
-    margin-bottom: 2px;
+  .side-list::-webkit-scrollbar { width: 6px; }
+  .side-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .side-list::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+  .side-card {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--r);
+    padding: 8px;
+    cursor: pointer;
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 10px;
+    align-items: center;
+    transition: background 0.15s, border-color 0.15s;
+    text-align: left;
+    width: 100%;
+  }
+  .side-card:hover { background: var(--surface-2); }
+  .side-card.active { background: var(--surface); border-color: var(--border); box-shadow: var(--shadow-sm); }
+
+  .side-card-img {
+    width: 56px; height: 56px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: var(--surface-3);
+    flex-shrink: 0;
+  }
+  .side-card-img.placeholder {
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-faint);
+    font-size: 18px;
+  }
+  .side-card-info { min-width: 0; }
+  .side-card-price {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    font-feature-settings: 'tnum';
+    margin-bottom: 1px;
+  }
+  .side-card-addr {
+    font-size: 12.5px;
+    color: var(--ink-dim);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .prop-neighborhood {
-    font-size: 12px;
-    color: var(--text-dim);
-    margin-bottom: 8px;
+  .side-card-meta {
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    margin-top: 1px;
   }
-  .prop-meta {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
-  .prop-chip {
-    font-size: 11px;
-    padding: 3px 8px;
-    border-radius: 20px;
-    background: var(--cream-faint);
-    color: var(--cream-dim);
-  }
-  .prop-price {
-    font-family: 'Playfair Display', serif;
-    font-size: 16px;
-    color: var(--accent);
-    font-weight: 600;
-    margin-bottom: 6px;
-  }
-  .prop-score {
-    position: absolute;
-    top: 10px; right: 10px;
-    font-size: 11px;
-    font-weight: 500;
-    padding: 3px 8px;
-    border-radius: 20px;
-  }
-  .prop-score.high { background: var(--green-dim); color: var(--green); }
-  .prop-score.mid { background: var(--accent-dim); color: var(--accent); }
 
-  .empty-sidebar {
-    text-align: center;
-    padding: 40px 16px;
-    color: var(--text-faint);
+  .side-empty {
+    margin-top: 4px;
+    padding: 16px 12px;
+    background: var(--surface-2);
+    border: 1px dashed var(--border);
+    border-radius: var(--r);
+    color: var(--ink-faint);
     font-size: 13px;
-    line-height: 1.8;
+    line-height: 1.55;
   }
-  .empty-sidebar .icon { font-size: 28px; margin-bottom: 10px; opacity: 0.4; }
+
+  .side-foot {
+    border-top: 1px solid var(--border);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11.5px;
+    color: var(--ink-faint);
+  }
+  .live-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--ink-dim);
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--pos);
+    box-shadow: 0 0 0 0 rgba(92,140,106,0.4);
+    animation: pulse 2.4s ease-out infinite;
+  }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(92,140,106,0.5); }
+    70%  { box-shadow: 0 0 0 6px rgba(92,140,106,0); }
+    100% { box-shadow: 0 0 0 0 rgba(92,140,106,0); }
+  }
 
   /* ── Chat area ── */
-  .chat-area {
+  .chat {
     display: flex;
     flex-direction: column;
     overflow: hidden;
     background: var(--bg);
+    position: relative;
   }
+
+  .chat-head {
+    height: 52px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 22px;
+    gap: 12px;
+    background: rgba(244,241,232,0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    flex-shrink: 0;
+  }
+  .chat-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+  .chat-sub {
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    margin-left: 8px;
+  }
+  .chat-head .ghost {
+    margin-left: auto;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 12.5px;
+    color: var(--ink-dim);
+    cursor: pointer;
+    transition: all 0.18s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .chat-head .ghost:hover { background: var(--surface); border-color: var(--border-strong); color: var(--ink); }
 
   .messages {
     flex: 1;
     overflow-y: auto;
-    padding: 28px 32px;
+    padding: 36px 24px 24px;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 28px;
+    scroll-behavior: smooth;
   }
-  .messages::-webkit-scrollbar { width: 4px; }
-  .messages::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+  .messages::-webkit-scrollbar { width: 8px; }
+  .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  .messages::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
 
-  /* Welcome screen */
-  .welcome {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px;
-    text-align: center;
-    gap: 16px;
-  }
-  .welcome-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 36px;
-    font-weight: 400;
-    color: var(--cream);
-    line-height: 1.2;
-    max-width: 480px;
-  }
-  .welcome-title em { font-style: italic; color: var(--accent); }
-  .welcome-sub {
-    font-size: 15px;
-    color: var(--text-dim);
-    max-width: 400px;
-  }
-  .suggestion-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-top: 12px;
-    max-width: 560px;
+  .turn {
     width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+    animation: fadeUp 0.4s cubic-bezier(0.2,0.8,0.2,1) both;
   }
-  .suggestion {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-    text-align: left;
-    cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* User message */
+  .user-row { display: flex; justify-content: flex-end; }
+  .user-msg {
+    max-width: 80%;
+    background: var(--surface-3);
+    color: var(--ink);
+    padding: 11px 16px;
+    border-radius: 18px 18px 4px 18px;
+    font-size: 14.5px;
+    line-height: 1.5;
+    letter-spacing: -0.003em;
+    word-wrap: break-word;
+  }
+
+  /* Assistant message */
+  .assistant-row {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .avatar {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent-bright), var(--accent-deep));
+    color: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px -2px rgba(196,99,60,0.4);
+    margin-top: 2px;
+  }
+  .avatar svg { width: 16px; height: 16px; }
+  .assistant-body { flex: 1; min-width: 0; }
+  .assistant-name {
     font-size: 13px;
-    color: var(--text-dim);
-    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 8px;
+    letter-spacing: -0.005em;
   }
-  .suggestion:hover { border-color: var(--accent); color: var(--text); background: var(--surface2); }
-  .suggestion strong { display: block; font-size: 13px; color: var(--cream); font-weight: 500; margin-bottom: 4px; }
-
-  /* Messages */
-  .message { display: flex; flex-direction: column; gap: 4px; max-width: 760px; width: 100%; margin: 0 auto; }
-  .message.user { align-items: flex-end; }
-  .message.assistant { align-items: flex-start; }
-
-  .msg-bubble {
-    padding: 12px 16px;
-    border-radius: var(--radius);
-    font-size: 14px;
-    line-height: 1.7;
-    max-width: 85%;
-  }
-  .message.user .msg-bubble {
-    background: var(--accent);
-    color: #1a1408;
+  .assistant-name .stamp {
+    font-size: 11.5px;
     font-weight: 400;
-    border-radius: var(--radius) var(--radius) 4px var(--radius);
+    color: var(--ink-faint);
+    margin-left: 6px;
   }
-  .message.assistant .msg-bubble {
+
+  /* Tool narration */
+  .tool-stack {
+    margin: 4px 0 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .tool-line {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 12.5px;
+    color: var(--ink-faint);
+  }
+  .tool-line .check {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--pos-soft);
+    color: var(--pos);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 9px;
+  }
+  .tool-line .check svg { width: 8px; height: 8px; }
+
+  /* Prose */
+  .prose {
+    font-family: 'Source Serif 4', 'DM Sans', serif;
+    font-size: 16px;
+    line-height: 1.62;
+    color: var(--ink);
+    letter-spacing: -0.003em;
+    font-variation-settings: "opsz" 16, "wght" 420;
+  }
+  .prose p { margin-bottom: 0.75em; }
+  .prose p:last-child { margin-bottom: 0; }
+  .prose strong { font-weight: 600; color: var(--ink); }
+  .prose em { font-style: italic; }
+  .prose ul {
+    list-style: none;
+    padding: 0;
+    margin: 0.5em 0 0.75em;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .prose li {
+    position: relative;
+    padding-left: 18px;
+  }
+  .prose li::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 0.65em;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .prose code {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.9em;
+    background: var(--surface-3);
+    color: var(--ink);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+
+  /* Inline property cards */
+  .listing-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin: 16px 0 8px;
+  }
+  @media (min-width: 720px) {
+    .listing-grid.dense { grid-template-columns: 1fr 1fr; }
+  }
+  .listing-card {
     background: var(--surface);
     border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: var(--radius) var(--radius) var(--radius) 4px;
+    border-radius: var(--r-md);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
     width: 100%;
-    max-width: 100%;
+    padding: 0;
+  }
+  .listing-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+    border-color: var(--border-strong);
+  }
+  .listing-card.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent-mid), var(--shadow);
+  }
+  .listing-img-wrap {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    background: var(--surface-3);
+    overflow: hidden;
+  }
+  .listing-img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s cubic-bezier(0.2,0.8,0.2,1);
+    display: block;
+  }
+  .listing-card:hover .listing-img { transform: scale(1.04); }
+  .listing-img-fallback {
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, var(--surface-3), var(--bg-2));
+    display: flex; align-items: center; justify-content: center;
+    color: var(--ink-faint);
+    font-size: 32px;
+  }
+  .listing-score {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: rgba(252,250,243,0.94);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(31,27,20,0.06);
+    color: var(--ink);
+    padding: 4px 9px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 2px 6px rgba(31,27,20,0.10);
+  }
+  .listing-score .star {
+    color: var(--accent);
+    font-size: 12px;
+    line-height: 1;
+  }
+  .listing-rank {
+    position: absolute;
+    top: 10px; left: 10px;
+    background: rgba(31,27,20,0.86);
+    backdrop-filter: blur(6px);
+    color: var(--bg);
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+  .listing-body {
+    padding: 14px 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .listing-price-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .listing-price {
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+    font-feature-settings: 'tnum';
+  }
+  .listing-walk {
+    font-size: 12px;
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+  .listing-walk b {
+    font-weight: 500;
+    color: var(--ink-dim);
+  }
+  .listing-addr {
+    font-size: 14px;
+    color: var(--ink);
+    font-weight: 500;
+    line-height: 1.35;
+    letter-spacing: -0.005em;
+  }
+  .listing-neigh {
+    font-size: 12.5px;
+    color: var(--ink-faint);
+  }
+  .listing-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .meta-chip {
+    font-size: 11.5px;
+    color: var(--ink-dim);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-weight: 500;
+    letter-spacing: -0.003em;
+    font-feature-settings: 'tnum';
+  }
+  .listing-why {
+    font-family: 'Source Serif 4', serif;
+    font-variation-settings: "opsz" 14, "wght" 420;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--ink-2);
+    margin-top: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
   }
 
-  .msg-label { font-size: 11px; color: var(--text-faint); padding: 0 4px; }
+  /* Followups */
+  .followups {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .followup {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 7px 13px;
+    font-size: 13px;
+    color: var(--ink-dim);
+    cursor: pointer;
+    transition: all 0.18s;
+    line-height: 1.3;
+  }
+  .followup:hover {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent-deep);
+  }
 
-  /* Thinking indicator */
+  /* Thinking */
   .thinking {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 12px 16px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius) var(--radius) var(--radius) 4px;
-    font-size: 13px;
-    color: var(--text-dim);
-    width: fit-content;
+    color: var(--ink-faint);
+    font-size: 13.5px;
   }
-  .think-dots { display: flex; gap: 4px; }
+  .think-dots {
+    display: flex; gap: 4px;
+  }
   .think-dots span {
     width: 5px; height: 5px;
     border-radius: 50%;
     background: var(--accent);
-    animation: bounce 1.2s infinite;
+    opacity: 0.5;
+    animation: dotBounce 1.2s ease-in-out infinite;
   }
-  .think-dots span:nth-child(2) { animation-delay: 0.2s; }
-  .think-dots span:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes bounce {
-    0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
-    40% { transform: translateY(-5px); opacity: 1; }
+  .think-dots span:nth-child(2) { animation-delay: 0.15s; }
+  .think-dots span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes dotBounce {
+    0%, 100% { opacity: 0.3; transform: translateY(0); }
+    40%      { opacity: 1; transform: translateY(-3px); }
   }
 
-  /* Tool call badge */
-  .tool-call {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    padding: 4px 10px;
-    background: var(--cream-faint);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    color: var(--cream-dim);
-    margin-bottom: 8px;
-    font-weight: 500;
-  }
-  .tool-call .tool-icon { opacity: 0.7; }
-
-  /* Agent response formatting */
-  .agent-section { margin-bottom: 14px; }
-  .agent-section:last-child { margin-bottom: 0; }
-  .agent-section h3 {
-    font-family: 'Playfair Display', serif;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--cream);
-    margin-bottom: 8px;
-  }
-  .agent-section p { font-size: 14px; line-height: 1.7; color: var(--text); }
-
-  /* Inline property result */
-  .inline-property {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 12px 14px;
-    margin: 6px 0;
+  /* Welcome */
+  .welcome {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
     display: flex;
-    gap: 12px;
-    align-items: flex-start;
-    cursor: pointer;
-    transition: border-color 0.2s;
+    flex-direction: column;
   }
-  .inline-property:hover { border-color: var(--accent); }
-  .inline-prop-rank {
-    font-family: 'Playfair Display', serif;
-    font-size: 20px;
+  .welcome-inner {
+    max-width: 760px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 80px 24px 40px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .greeting {
+    font-family: 'Source Serif 4', serif;
+    font-variation-settings: "opsz" 60, "wght" 440;
+    font-size: clamp(34px, 5vw, 44px);
+    line-height: 1.12;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .greeting .accent {
     color: var(--accent);
-    opacity: 0.7;
-    min-width: 24px;
-    line-height: 1;
+    font-style: italic;
+    font-variation-settings: "opsz" 60, "wght" 440;
   }
-  .inline-prop-info { flex: 1; }
-  .inline-prop-addr { font-size: 13px; font-weight: 500; color: var(--cream); margin-bottom: 2px; }
-  .inline-prop-detail { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
-  .inline-prop-price { font-family: 'Playfair Display', serif; font-size: 15px; color: var(--accent); white-space: nowrap; }
-
-  /* Follow-up chips */
-  .followup-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-  .followup-chip {
-    font-size: 12px;
-    padding: 5px 12px;
-    border: 1px solid var(--border2);
-    border-radius: 20px;
-    color: var(--text-dim);
-    cursor: pointer;
-    transition: all 0.15s;
-    background: transparent;
-    font-family: 'DM Sans', sans-serif;
+  .greeting-sub {
+    font-size: 16px;
+    color: var(--ink-dim);
+    line-height: 1.5;
+    max-width: 52ch;
+    margin-bottom: 36px;
   }
-  .followup-chip:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
-
-  /* ── Input bar ── */
-  .input-bar {
-    padding: 16px 24px 20px;
-    border-top: 1px solid var(--border);
-    background: var(--bg);
-  }
-  .input-row {
-    display: flex;
+  .quick-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 10px;
-    align-items: flex-end;
+  }
+  @media (max-width: 620px) {
+    .quick-grid { grid-template-columns: 1fr; }
+  }
+  .quick {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 10px 12px 10px 16px;
-    transition: border-color 0.2s;
+    border-radius: var(--r-md);
+    padding: 14px 16px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .quick:hover {
+    border-color: var(--border-strong);
+    background: var(--surface-2);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+  .quick-title {
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .quick-icon {
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .quick-icon svg { width: 12px; height: 12px; }
+  .quick-text {
+    font-size: 13px;
+    color: var(--ink-dim);
+    line-height: 1.45;
+  }
+
+  /* Input */
+  .input-region {
+    border-top: 1px solid var(--border);
+    padding: 14px 24px 18px;
+    background: linear-gradient(180deg, transparent, var(--bg) 50%);
+    flex-shrink: 0;
+  }
+  .input-wrap {
     max-width: 760px;
     margin: 0 auto;
   }
-  .input-row:focus-within { border-color: var(--border2); }
+  .input-shell {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 4px 4px 4px 18px;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-shadow: var(--shadow-sm);
+  }
+  .input-shell:focus-within {
+    border-color: var(--ink-faint);
+    box-shadow: 0 0 0 3px rgba(31,27,20,0.04), var(--shadow);
+  }
   .chat-input {
     flex: 1;
     background: none;
     border: none;
     outline: none;
-    color: var(--text);
-    font-size: 14px;
-    font-family: 'DM Sans', sans-serif;
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.5;
     resize: none;
     min-height: 24px;
-    max-height: 120px;
-    line-height: 1.6;
+    max-height: 200px;
+    padding: 10px 0;
+    letter-spacing: -0.003em;
   }
-  .chat-input::placeholder { color: var(--text-faint); }
+  .chat-input::placeholder { color: var(--ink-faint); }
   .send-btn {
-    width: 36px; height: 36px;
-    border-radius: 8px;
-    background: var(--accent);
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--bg);
     border: none;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
-    transition: opacity 0.2s, transform 0.1s;
-    color: #1a1408;
-    font-size: 16px;
+    align-self: flex-end;
+    margin-bottom: 4px;
+    transition: all 0.15s;
   }
-  .send-btn:hover { opacity: 0.9; }
-  .send-btn:active { transform: scale(0.95); }
-  .send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .send-btn:hover { background: var(--accent); transform: scale(1.04); }
+  .send-btn:active { transform: scale(0.94); }
+  .send-btn:disabled {
+    background: var(--ink-ghost);
+    cursor: not-allowed;
+    transform: none;
+  }
+  .send-btn svg { width: 14px; height: 14px; }
+  .input-foot {
+    text-align: center;
+    margin-top: 8px;
+    font-size: 11.5px;
+    color: var(--ink-faint);
+  }
 
   /* Mortgage modal */
   .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(10,9,8,0.8);
+    background: rgba(31,27,20,0.32);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     z-index: 100;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 24px;
-    backdrop-filter: blur(4px);
+    animation: fadeIn 0.2s ease both;
   }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   .modal {
     background: var(--surface);
-    border: 1px solid var(--border2);
-    border-radius: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
     padding: 28px;
     width: 100%;
-    max-width: 440px;
+    max-width: 460px;
+    box-shadow: var(--shadow-lg);
+    animation: modalIn 0.32s cubic-bezier(0.2,0.8,0.2,1) both;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(12px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .modal-eyebrow {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
   }
   .modal-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 22px;
-    color: var(--cream);
-    margin-bottom: 20px;
+    font-family: 'Source Serif 4', serif;
+    font-variation-settings: "opsz" 40, "wght" 500;
+    font-size: 24px;
+    color: var(--ink);
+    letter-spacing: -0.022em;
+    margin-bottom: 4px;
   }
-  .modal-field { margin-bottom: 16px; }
-  .modal-field label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 6px; letter-spacing: 0.3px; }
-  .modal-field input {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 10px 12px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.2s;
+  .modal-sub {
+    font-size: 13px;
+    color: var(--ink-dim);
+    margin-bottom: 22px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
   }
-  .modal-field input:focus { border-color: var(--accent); }
-  .modal-result {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 16px;
-    margin-top: 16px;
-  }
-  .modal-result-row {
+  .modal-sub b { color: var(--ink); font-weight: 500; }
+
+  .field { margin-bottom: 16px; }
+  .field-head {
     display: flex;
     justify-content: space-between;
-    font-size: 13px;
-    padding: 4px 0;
-    color: var(--text-dim);
+    align-items: baseline;
+    margin-bottom: 7px;
   }
-  .modal-result-row span:last-child { color: var(--cream); font-weight: 500; }
-  .modal-result-row.total { border-top: 1px solid var(--border); margin-top: 8px; padding-top: 12px; }
-  .modal-result-row.total span:last-child { color: var(--accent); font-family: 'Playfair Display', serif; font-size: 18px; }
-  .modal-close {
-    width: 100%; margin-top: 20px;
-    background: var(--accent-dim);
-    border: 1px solid var(--accent);
-    color: var(--accent);
-    padding: 10px;
-    border-radius: var(--radius-sm);
+  .field-label {
+    font-size: 12.5px;
+    color: var(--ink-dim);
+    font-weight: 500;
+  }
+  .field-value {
+    font-size: 13.5px;
+    color: var(--ink);
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    font-feature-settings: 'tnum';
+  }
+  .field-value em {
+    color: var(--ink-faint);
+    font-weight: 400;
+    font-style: normal;
+    margin-left: 4px;
+  }
+  .field input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
     cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
-    transition: background 0.2s;
   }
-  .modal-close:hover { background: var(--accent); color: #1a1408; }
+  .field input[type="range"]::-webkit-slider-runnable-track {
+    height: 3px; background: var(--border-strong); border-radius: 2px;
+  }
+  .field input[type="range"]::-moz-range-track {
+    height: 3px; background: var(--border-strong); border-radius: 2px;
+  }
+  .field input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    margin-top: -7px;
+    background: var(--accent);
+    border-radius: 50%;
+    border: 2px solid var(--surface);
+    box-shadow: 0 0 0 1px var(--accent), 0 2px 4px rgba(196,99,60,0.3);
+    cursor: grab;
+    transition: transform 0.15s;
+  }
+  .field input[type="range"]::-webkit-slider-thumb:active { transform: scale(1.18); cursor: grabbing; }
+  .field input[type="range"]::-moz-range-thumb {
+    width: 16px; height: 16px;
+    background: var(--accent);
+    border-radius: 50%;
+    border: 2px solid var(--surface);
+  }
+
+  .modal-result {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 16px 18px;
+    margin-top: 18px;
+  }
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 6px 0;
+    font-size: 13px;
+  }
+  .result-row .rk { color: var(--ink-dim); }
+  .result-row .rv { color: var(--ink); font-weight: 500; font-feature-settings: 'tnum'; }
+  .result-row.total {
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+    padding-top: 12px;
+  }
+  .result-row.total .rk { font-size: 13px; }
+  .result-row.total .rv {
+    font-family: 'Source Serif 4', serif;
+    font-variation-settings: "opsz" 30, "wght" 600;
+    font-size: 22px;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+  }
+  .result-row.total .rv .per {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    color: var(--ink-faint);
+    font-weight: 400;
+    margin-left: 2px;
+  }
+  .modal-close {
+    width: 100%;
+    margin-top: 18px;
+    background: var(--ink);
+    color: var(--bg);
+    border: none;
+    padding: 11px;
+    border-radius: var(--r);
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 500;
+    transition: all 0.18s;
+  }
+  .modal-close:hover { background: var(--accent); }
+
+  /* Responsive */
+  @media (max-width: 820px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .messages { padding: 24px 18px 18px; }
+    .input-region { padding: 12px 18px 14px; }
+    .welcome-inner { padding: 48px 20px 24px; }
+  }
 `;
 
-// ─── Mock property data (in real app: from Repliers.io) ───────────────────────
-const MOCK_LISTINGS = [
-  {
-    id: 1, rank: 1,
-    address: "47 Rosedale Valley Rd", neighborhood: "Rosedale",
-    price: 789000, beds: 3, baths: 2, sqft: 1340,
-    walkScore: 82, transitScore: 78,
-    commute: "28 min to downtown",
-    schools: "Rosedale Jr PS (9.1/10)",
-    emoji: "🏡",
-    why: "Best value in the shortlist. Under budget with strong walk score and direct subway access.",
-    score: 94
-  },
-  {
-    id: 2, rank: 2,
-    address: "1205 Bathurst St #412", neighborhood: "Annex",
-    price: 729000, beds: 3, baths: 2, sqft: 1180,
-    walkScore: 91, transitScore: 92,
-    commute: "22 min to downtown",
-    schools: "Huron St PS (8.6/10)",
-    emoji: "🏢",
-    why: "Highest transit score. Walkable to Bloor shops and cafes. Condo fees ~$480/mo.",
-    score: 88
-  },
-  {
-    id: 3, rank: 3,
-    address: "312 Broadview Ave", neighborhood: "Riverdale",
-    price: 845000, beds: 3, baths: 2, sqft: 1520,
-    walkScore: 76, transitScore: 71,
-    commute: "31 min to downtown",
-    schools: "Riverdale Collegiate (8.2/10)",
-    emoji: "🏠",
-    why: "Most space per dollar. Slightly over budget but strong school catchment.",
-    score: 81
+// ─── SVG icons ───────────────────────────────────────────────────────────────
+const Icons = {
+  Logo: () => (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3 11 L12 4 L21 11 V20 H15 V14 H9 V20 H3 Z"
+        stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round"/>
+    </svg>
+  ),
+  Spark: () => (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 3 L13.5 9 L20 10.5 L13.5 12 L12 18 L10.5 12 L4 10.5 L10.5 9 Z"
+        fill="currentColor"/>
+    </svg>
+  ),
+  Plus: () => (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 5 V19 M5 12 H19" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+    </svg>
+  ),
+  ArrowUp: () => (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 5 V19 M6 11 L12 5 L18 11"
+        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  Check: () => (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5 12 L10 17 L19 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  Home: () => (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 11 L12 5 L20 11 V19 H14 V14 H10 V19 H4 Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
+    </svg>
+  ),
+  Building: () => (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="5" y="4" width="14" height="16" rx="1" stroke="currentColor" strokeWidth="1.6"/>
+      <path d="M9 9 H10 M14 9 H15 M9 13 H10 M14 13 H15 M9 17 H10 M14 17 H15" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+    </svg>
+  ),
+  Trend: () => (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M4 17 L9 12 L13 15 L20 7 M14 7 H20 V13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  Map: () => (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9 5 L3 7 V20 L9 18 L15 20 L21 18 V5 L15 7 Z M9 5 V18 M15 7 V20" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round"/>
+    </svg>
+  ),
+};
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+const formatPrice = (n) => {
+  if (!n) return "—";
+  if (n >= 1_000_000) {
+    const v = n / 1_000_000;
+    return `$${(v >= 10 ? v.toFixed(1) : v.toFixed(2)).replace(/\.?0+$/, '')}M`;
   }
-];
+  if (n >= 1_000) return `$${Math.round(n / 1000)}K`;
+  return `$${n.toLocaleString()}`;
+};
 
-// ─── System prompt for the agent ─────────────────────────────────────────────
-const SYSTEM_PROMPT = `You are HomeAgent, an elite real estate research assistant specializing in the Greater Toronto Area. You help buyers find properties through conversational search.
-
-You have access to these capabilities (simulate them realistically when called):
-- search_listings(query, maxPrice, beds, neighborhood) → returns ranked property results
-- get_neighborhood_scores(address) → returns walkScore, transitScore, school ratings, avg commute
-- calculate_mortgage(price, downPayment, amortization, rate) → returns monthly payment breakdown
-- get_market_trends(neighborhood) → returns avg price, YoY change, days on market, price per sqft
-
-CRITICAL BEHAVIOR:
-1. When a user describes their home search, ALWAYS call the relevant tools and return STRUCTURED results
-2. Format property results using this EXACT JSON block in your response (parseable):
-   <<<LISTINGS:[{"id":1,"address":"...","neighborhood":"...","price":000000,"beds":0,"baths":0,"sqft":0,"walkScore":0,"transitScore":0,"commute":"...","schools":"...","emoji":"🏠","why":"...","score":0}]>>>
-3. After the listings block, write a brief natural explanation (2-3 sentences)
-4. End EVERY response with a <<<FOLLOWUPS:["question 1","question 2","question 3"]>>> block
-
-For tool calls, narrate them naturally: "Searching MLS listings... pulling neighborhood scores... running affordability check..."
-
-Be specific and confident. Use real Toronto neighborhood names, real TTC commute times, realistic 2024-2025 prices (condos $600-900k, semis $800k-1.2M, detached $1.1M+). 
-
-If the user asks follow-up questions (show cheaper, different area, can I afford this), run new tool calls with updated params and return fresh listings.
-
-For mortgage questions, return: <<<MORTGAGE:{"price":0,"down":0,"monthly":0,"cmhc":0,"total":0}>>>
-
-Keep tone warm, expert, and concise. Never say you're an AI or that you can't access real data — simulate it confidently.`;
-
-// ─── Parse agent response ─────────────────────────────────────────────────────
 function parseAgentResponse(text) {
   let listings = null;
   let followups = [];
@@ -581,20 +1018,17 @@ function parseAgentResponse(text) {
 
   const listingsMatch = text.match(/<<<LISTINGS:(\[[\s\S]*?\])>>>/);
   if (listingsMatch) {
-    try { listings = JSON.parse(listingsMatch[1]); } catch(e) {}
+    try { listings = JSON.parse(listingsMatch[1]); } catch (e) {}
   }
-
   const followupsMatch = text.match(/<<<FOLLOWUPS:(\[[\s\S]*?\])>>>/);
   if (followupsMatch) {
-    try { followups = JSON.parse(followupsMatch[1]); } catch(e) {}
+    try { followups = JSON.parse(followupsMatch[1]); } catch (e) {}
   }
-
   const mortgageMatch = text.match(/<<<MORTGAGE:(\{[\s\S]*?\})>>>/);
   if (mortgageMatch) {
-    try { mortgage = JSON.parse(mortgageMatch[1]); } catch(e) {}
+    try { mortgage = JSON.parse(mortgageMatch[1]); } catch (e) {}
   }
 
-  // Clean the display text
   let clean = text
     .replace(/<<<LISTINGS:[\s\S]*?>>>/g, '')
     .replace(/<<<FOLLOWUPS:[\s\S]*?>>>/g, '')
@@ -604,95 +1038,197 @@ function parseAgentResponse(text) {
   return { clean, listings, followups, mortgage };
 }
 
-// ─── Mortgage calculator ──────────────────────────────────────────────────────
 function calcMortgage(price, downPct, years, rate) {
   const down = price * (downPct / 100);
   const principal = price - down;
-  let cmhc = 0;
-  if (downPct < 20) {
-    const ratio = principal / price;
-    cmhc = ratio >= 0.9 ? principal * 0.04 : ratio >= 0.85 ? principal * 0.031 : principal * 0.028;
-  }
-  const totalPrincipal = principal + cmhc;
+  let pmiMonthly = 0;
+  if (downPct < 20) pmiMonthly = (principal * 0.008) / 12;
   const monthlyRate = (rate / 100) / 12;
   const n = years * 12;
-  const monthly = totalPrincipal * (monthlyRate * Math.pow(1+monthlyRate, n)) / (Math.pow(1+monthlyRate, n) - 1);
-  return { down: Math.round(down), monthly: Math.round(monthly), cmhc: Math.round(cmhc), principal: Math.round(totalPrincipal) };
+  const pi = principal * (monthlyRate * Math.pow(1 + monthlyRate, n)) / (Math.pow(1 + monthlyRate, n) - 1);
+  return {
+    down: Math.round(down),
+    principal: Math.round(principal),
+    monthlyPI: Math.round(pi),
+    pmi: Math.round(pmiMonthly),
+    monthly: Math.round(pi + pmiMonthly),
+  };
+}
+
+// ─── Inline markdown renderer (handles **bold**, *italic*, `code`, lists) ────
+function renderInline(text) {
+  const out = [];
+  const re = /\*\*(.+?)\*\*|\*([^*\n]+?)\*|`([^`\n]+?)`/g;
+  let last = 0;
+  let m;
+  let key = 0;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) out.push(text.slice(last, m.index));
+    if (m[1] !== undefined) out.push(<strong key={`s${key++}`}>{m[1]}</strong>);
+    else if (m[2] !== undefined) out.push(<em key={`e${key++}`}>{m[2]}</em>);
+    else if (m[3] !== undefined) out.push(<code key={`c${key++}`}>{m[3]}</code>);
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return out;
+}
+
+function MarkdownProse({ text }) {
+  const lines = text.split('\n').filter(l => l.trim().length > 0);
+  const blocks = [];
+  let listBuf = [];
+  for (const line of lines) {
+    const trim = line.trim();
+    const lm = trim.match(/^[*\-•]\s+(.+)/);
+    if (lm) {
+      listBuf.push(lm[1]);
+    } else {
+      if (listBuf.length) {
+        blocks.push({ type: 'ul', items: listBuf });
+        listBuf = [];
+      }
+      blocks.push({ type: 'p', text: trim });
+    }
+  }
+  if (listBuf.length) blocks.push({ type: 'ul', items: listBuf });
+
+  return (
+    <div className="prose">
+      {blocks.map((b, i) =>
+        b.type === 'ul'
+          ? <ul key={i}>{b.items.map((it, j) => <li key={j}>{renderInline(it)}</li>)}</ul>
+          : <p key={i}>{renderInline(b.text)}</p>
+      )}
+    </div>
+  );
 }
 
 // ─── Components ──────────────────────────────────────────────────────────────
 
-function PropertyCard({ prop, active, onClick }) {
-  const scoreClass = prop.score >= 90 ? 'high' : 'mid';
+function ListingCard({ prop, index, active, onClick }) {
+  const [imgFailed, setImgFailed] = useState(false);
   return (
-    <div className={`property-card ${active ? 'active' : ''}`} onClick={() => onClick(prop)}>
-      <div className="prop-img">{prop.emoji}</div>
-      <div className="prop-score" style={{background: scoreClass === 'high' ? 'var(--green-dim)' : 'var(--accent-dim)', color: scoreClass === 'high' ? 'var(--green)' : 'var(--accent)'}}>
-        {prop.score}/100
+    <button className={`listing-card ${active ? 'active' : ''}`} onClick={() => onClick(prop)}>
+      <div className="listing-img-wrap">
+        {prop.image && !imgFailed ? (
+          <img
+            src={prop.image}
+            alt={prop.address}
+            className="listing-img"
+            loading="lazy"
+            onError={() => setImgFailed(true)}
+          />
+        ) : (
+          <div className="listing-img-fallback"><Icons.Home/></div>
+        )}
+        {typeof index === 'number' && <div className="listing-rank">{String(index + 1).padStart(2, '0')}</div>}
+        {prop.score != null && (
+          <div className="listing-score">
+            <span className="star">★</span>{prop.score}
+          </div>
+        )}
       </div>
-      <div className="prop-price">${(prop.price/1000).toFixed(0)}k</div>
-      <div className="prop-address">{prop.address}</div>
-      <div className="prop-neighborhood">{prop.neighborhood}</div>
-      <div className="prop-meta">
-        <span className="prop-chip">{prop.beds}bd</span>
-        <span className="prop-chip">{prop.baths}ba</span>
-        <span className="prop-chip">{prop.sqft?.toLocaleString()} sqft</span>
-        <span className="prop-chip">Walk {prop.walkScore}</span>
+      <div className="listing-body">
+        <div className="listing-price-row">
+          <span className="listing-price">{formatPrice(prop.price)}</span>
+          {prop.walkScore != null && (
+            <span className="listing-walk">walk <b>{prop.walkScore}</b></span>
+          )}
+        </div>
+        <div className="listing-addr">{prop.address}</div>
+        {prop.neighborhood && <div className="listing-neigh">{prop.neighborhood}</div>}
+        <div className="listing-meta">
+          <span className="meta-chip">{prop.beds} bd</span>
+          <span className="meta-chip">{prop.baths} ba</span>
+          {prop.sqft ? <span className="meta-chip">{prop.sqft.toLocaleString()} sqft</span> : null}
+          {prop.commute && <span className="meta-chip">{prop.commute}</span>}
+        </div>
+        {prop.why && <div className="listing-why">{prop.why}</div>}
       </div>
-    </div>
+    </button>
+  );
+}
+
+function SideCard({ prop, active, onClick }) {
+  const [imgFailed, setImgFailed] = useState(false);
+  return (
+    <button className={`side-card ${active ? 'active' : ''}`} onClick={() => onClick(prop)}>
+      {prop.image && !imgFailed ? (
+        <img
+          src={prop.image}
+          alt=""
+          className="side-card-img"
+          loading="lazy"
+          onError={() => setImgFailed(true)}
+        />
+      ) : (
+        <div className="side-card-img placeholder"><Icons.Home/></div>
+      )}
+      <div className="side-card-info">
+        <div className="side-card-price">{formatPrice(prop.price)}</div>
+        <div className="side-card-addr">{prop.address}</div>
+        <div className="side-card-meta">{prop.beds}bd · {prop.baths}ba{prop.sqft ? ` · ${prop.sqft.toLocaleString()}sf` : ''}</div>
+      </div>
+    </button>
   );
 }
 
 function ThinkingBubble({ step }) {
   return (
     <div className="thinking">
-      <div className="think-dots">
-        <span/><span/><span/>
-      </div>
-      <span style={{fontSize:13}}>{step || "Searching listings..."}</span>
+      <div className="think-dots"><span/><span/><span/></div>
+      <span>{step || "Thinking"}</span>
     </div>
   );
 }
 
 function MortgageModal({ property, onClose }) {
   const [downPct, setDownPct] = useState(20);
-  const [years, setYears] = useState(25);
-  const [rate, setRate] = useState(5.49);
+  const [years, setYears] = useState(30);
+  const [rate, setRate] = useState(7.0);
   const price = property?.price || 750000;
-  const result = calcMortgage(price, downPct, years, rate);
+  const r = calcMortgage(price, downPct, years, rate);
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-title">Mortgage Estimate</div>
-        <div style={{fontSize:13, color:'var(--text-dim)', marginBottom:20}}>
-          {property?.address} · ${price.toLocaleString()}
+        <div className="modal-eyebrow">Affordability</div>
+        <div className="modal-title">Mortgage estimate</div>
+        <div className="modal-sub">
+          <b>{property?.address}</b> · {formatPrice(price)}
         </div>
 
-        <div className="modal-field">
-          <label>Down payment ({downPct}% · ${(price*downPct/100/1000).toFixed(0)}k)</label>
-          <input type="range" min="5" max="50" value={downPct} step="1"
-            onChange={e => setDownPct(+e.target.value)}
-            style={{width:'100%',accentColor:'var(--accent)'}} />
+        <div className="field">
+          <div className="field-head">
+            <span className="field-label">Down payment</span>
+            <span className="field-value">{downPct}%<em>${(price * downPct / 100 / 1000).toFixed(0)}k</em></span>
+          </div>
+          <input type="range" min="3" max="50" value={downPct} step="1" onChange={e => setDownPct(+e.target.value)}/>
         </div>
-        <div className="modal-field">
-          <label>Amortization ({years} years)</label>
-          <input type="range" min="10" max="30" value={years} step="5"
-            onChange={e => setYears(+e.target.value)}
-            style={{width:'100%',accentColor:'var(--accent)'}} />
+        <div className="field">
+          <div className="field-head">
+            <span className="field-label">Loan term</span>
+            <span className="field-value">{years}<em>years</em></span>
+          </div>
+          <input type="range" min="10" max="30" value={years} step="5" onChange={e => setYears(+e.target.value)}/>
         </div>
-        <div className="modal-field">
-          <label>Rate ({rate}%)</label>
-          <input type="range" min="3" max="9" value={rate} step="0.25"
-            onChange={e => setRate(+e.target.value)}
-            style={{width:'100%',accentColor:'var(--accent)'}} />
+        <div className="field">
+          <div className="field-head">
+            <span className="field-label">Interest rate</span>
+            <span className="field-value">{rate.toFixed(2)}<em>%</em></span>
+          </div>
+          <input type="range" min="3" max="9" value={rate} step="0.25" onChange={e => setRate(+e.target.value)}/>
         </div>
 
         <div className="modal-result">
-          <div className="modal-result-row"><span>Down payment</span><span>${result.down.toLocaleString()}</span></div>
-          <div className="modal-result-row"><span>Mortgage principal</span><span>${result.principal.toLocaleString()}</span></div>
-          {result.cmhc > 0 && <div className="modal-result-row"><span>CMHC premium</span><span>${result.cmhc.toLocaleString()}</span></div>}
-          <div className="modal-result-row total"><span>Monthly payment</span><span>${result.monthly.toLocaleString()}/mo</span></div>
+          <div className="result-row"><span className="rk">Down payment</span><span className="rv">${r.down.toLocaleString()}</span></div>
+          <div className="result-row"><span className="rk">Loan amount</span><span className="rv">${r.principal.toLocaleString()}</span></div>
+          <div className="result-row"><span className="rk">Principal & interest</span><span className="rv">${r.monthlyPI.toLocaleString()}/mo</span></div>
+          {r.pmi > 0 && <div className="result-row"><span className="rk">PMI</span><span className="rv">${r.pmi.toLocaleString()}/mo</span></div>}
+          <div className="result-row total">
+            <span className="rk">Monthly payment</span>
+            <span className="rv">${r.monthly.toLocaleString()}<span className="per"> /mo</span></span>
+          </div>
         </div>
 
         <button className="modal-close" onClick={onClose}>Close</button>
@@ -701,51 +1237,77 @@ function MortgageModal({ property, onClose }) {
   );
 }
 
-function AssistantMessage({ msg, onPropertyClick, onFollowup }) {
-  const { clean, listings, followups } = parseAgentResponse(msg.content);
-  const lines = clean.split('\n').filter(l => l.trim());
+function AssistantTurn({ msg, activeId, onPropertyClick, onFollowup }) {
+  const { clean, listings: parsedListings, followups } = parseAgentResponse(msg.content);
+  const lines = clean.split('\n');
 
-  // detect tool call narration lines
-  const toolLines = lines.filter(l => l.includes('...') && (l.toLowerCase().includes('search') || l.toLowerCase().includes('pull') || l.toLowerCase().includes('check') || l.toLowerCase().includes('fetch') || l.toLowerCase().includes('running')));
-  const bodyLines = lines.filter(l => !toolLines.includes(l));
+  // Merge agent-enriched listings with raw tool listings.
+  // Prefer parsed (has walkScore/why/score), fall back to tool data, then merge image from tool when missing.
+  let listings = parsedListings;
+  const toolListings = msg.toolListings || [];
+  if (!listings || !listings.length) {
+    listings = toolListings;
+  } else if (toolListings.length) {
+    const toolById = Object.fromEntries(toolListings.map(t => [String(t.id), t]));
+    listings = listings.map(l => {
+      const t = toolById[String(l.id)];
+      return t ? { ...l, image: l.image || t.image, sqft: l.sqft || t.sqft } : l;
+    });
+  }
+
+  const isToolLine = (l) => {
+    const lower = l.trim().toLowerCase();
+    if (!lower.endsWith('...') && !lower.endsWith('…')) return false;
+    return lower.includes('search') || lower.includes('pull') || lower.includes('check') ||
+           lower.includes('fetch') || lower.includes('running') || lower.includes('querying') ||
+           lower.includes('calculating') || lower.includes('ranking') || lower.includes('broaden');
+  };
+
+  const toolLines = lines.filter(l => l.trim() && isToolLine(l));
+  const proseText = lines.filter(l => !isToolLine(l)).join('\n').trim();
 
   return (
-    <div className="message assistant">
-      <div className="msg-label">HomeAgent</div>
-      <div className="msg-bubble">
-        {toolLines.map((l,i) => (
-          <div key={i} className="tool-call">
-            <span className="tool-icon">⚡</span> {l.replace(/^[•\-*]\s*/,'')}
-          </div>
-        ))}
+    <div className="turn">
+      <div className="assistant-row">
+        <div className="avatar"><Icons.Spark/></div>
+        <div className="assistant-body">
+          <div className="assistant-name">HomeAgent</div>
 
-        {listings && listings.map((prop, i) => (
-          <div key={prop.id} className="inline-property" onClick={() => onPropertyClick(prop)}>
-            <div className="inline-prop-rank">#{i+1}</div>
-            <div className="inline-prop-info">
-              <div className="inline-prop-addr">{prop.address} · {prop.neighborhood}</div>
-              <div className="inline-prop-detail">
-                {prop.beds}bd · {prop.baths}ba · {prop.sqft?.toLocaleString()} sqft · Walk {prop.walkScore} · {prop.commute}
-              </div>
-              {prop.why && <div style={{fontSize:12, color:'var(--text-faint)', marginTop:3}}>{prop.why}</div>}
+          {toolLines.length > 0 && (
+            <div className="tool-stack">
+              {toolLines.map((l, i) => (
+                <div key={i} className="tool-line">
+                  <span className="check"><Icons.Check/></span>
+                  <span>{l.trim().replace(/[.…]+$/, '')}</span>
+                </div>
+              ))}
             </div>
-            <div className="inline-prop-price">${(prop.price/1000).toFixed(0)}k</div>
-          </div>
-        ))}
+          )}
 
-        {bodyLines.length > 0 && (
-          <div style={{marginTop: listings ? 12 : 0, fontSize:14, lineHeight:1.7}}>
-            {bodyLines.map((l,i) => <p key={i} style={{marginBottom: i < bodyLines.length-1 ? 8 : 0}}>{l}</p>)}
-          </div>
-        )}
+          {proseText && <MarkdownProse text={proseText}/>}
 
-        {followups.length > 0 && (
-          <div className="followup-row">
-            {followups.map((f,i) => (
-              <button key={i} className="followup-chip" onClick={() => onFollowup(f)}>{f}</button>
-            ))}
-          </div>
-        )}
+          {listings && listings.length > 0 && (
+            <div className={`listing-grid ${listings.length >= 2 ? 'dense' : ''}`}>
+              {listings.map((p, i) => (
+                <ListingCard
+                  key={p.id || i}
+                  prop={p}
+                  index={i}
+                  active={activeId === p.id}
+                  onClick={onPropertyClick}
+                />
+              ))}
+            </div>
+          )}
+
+          {followups.length > 0 && (
+            <div className="followups">
+              {followups.map((f, i) => (
+                <button key={i} className="followup" onClick={() => onFollowup(f)}>{f}</button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -769,64 +1331,74 @@ export default function HomeAgent() {
 
   const handlePropertyClick = (prop) => {
     setActiveProperty(prop);
+    setMortgageModal(prop);
+  };
+
+  const handleSidebarClick = (prop) => {
+    setActiveProperty(prop);
   };
 
   const SUGGESTIONS = [
-    { title: "Family home search", text: "3-bed house under $900k in Toronto, good schools, max 30 min commute to downtown" },
-    { title: "First-time buyer condo", text: "2-bed condo under $750k near subway, walkable neighborhood, under $700/mo condo fees" },
-    { title: "Investment property", text: "What neighborhoods in Toronto have the best price appreciation and rental yield?" },
-    { title: "Specific area deep dive", text: "Show me everything available in Leslieville under $850k — semis or townhouses only" }
+    { icon: <Icons.Home/>, title: "Family home in Austin", text: "3-bed house under $900k with good schools" },
+    { icon: <Icons.Building/>, title: "Condo in Tampa", text: "2-bed condo near downtown, walkable, under $500k" },
+    { icon: <Icons.Trend/>, title: "Investment in Charlotte", text: "Townhouses under $400k with strong rental yield" },
+    { icon: <Icons.Map/>, title: "Explore Nashville", text: "Show me 3-bed homes in East Nashville under $700k" },
   ];
 
   const THINK_STEPS = [
-    "Querying MLS listings...",
-    "Pulling neighborhood scores...",
-    "Calculating commute times...",
-    "Running affordability analysis...",
-    "Ranking results..."
+    "Querying MLS",
+    "Pulling listings",
+    "Calculating scores",
+    "Ranking results",
   ];
 
   const sendMessage = async (text) => {
     const content = (text || input).trim();
     if (!content || loading) return;
     setInput('');
+    if (textareaRef.current) textareaRef.current.style.height = 'auto';
 
     const userMsg = { role: 'user', content };
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
+    setMessages(prev => [...prev, userMsg]);
     setLoading(true);
 
-    // Cycle through think steps
     let stepIdx = 0;
     setThinkStep(THINK_STEPS[0]);
     const stepInterval = setInterval(() => {
       stepIdx = (stepIdx + 1) % THINK_STEPS.length;
       setThinkStep(THINK_STEPS[stepIdx]);
-    }, 1200);
+    }, 1100);
 
     try {
       const data = await apiSend(content);
-      const assistantContent = data.response;
-
       clearInterval(stepInterval);
       setLoading(false);
 
-      const assistantMsg = { role: 'assistant', content: assistantContent };
+      // Fallback: derive listings from raw tool_calls if the model forgot the LISTINGS block.
+      const toolListings = (data.tool_calls || [])
+        .filter(tc => tc.name === 'search_listings' && tc.result && Array.isArray(tc.result.listings))
+        .flatMap(tc => tc.result.listings)
+        .filter(l => l && l.price);
+
+      const assistantMsg = {
+        role: 'assistant',
+        content: data.response,
+        toolListings,
+      };
       setMessages(prev => [...prev, assistantMsg]);
 
-      // Extract and update sidebar listings
-      const { listings } = parseAgentResponse(assistantContent);
-      if (listings && listings.length > 0) {
-        setProperties(listings);
-        setActiveProperty(listings[0]);
+      const { listings } = parseAgentResponse(data.response);
+      const finalListings = (listings && listings.length) ? listings : toolListings;
+      if (finalListings && finalListings.length > 0) {
+        setProperties(finalListings);
+        setActiveProperty(finalListings[0]);
       }
-
-    } catch(err) {
+    } catch (err) {
       clearInterval(stepInterval);
       setLoading(false);
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: "<<<FOLLOWUPS:[\"Try a different search\",\"Adjust your budget\"]>>>\nSomething went wrong connecting to the API. Make sure you're using this artifact through Claude.ai."
+        content: "I couldn't reach the local agent. Make sure the API is running on port 8000.\n<<<FOLLOWUPS:[\"Try again\",\"Check connection\"]>>>"
       }]);
     }
   };
@@ -838,6 +1410,14 @@ export default function HomeAgent() {
     }
   };
 
+  const handleNewChat = async () => {
+    try { await resetSession(); } catch (e) {}
+    setMessages([]);
+    setProperties([]);
+    setActiveProperty(null);
+    setInput('');
+  };
+
   const hasMessages = messages.length > 0;
 
   return (
@@ -845,146 +1425,149 @@ export default function HomeAgent() {
       <style>{STYLES}</style>
       <div className="app">
 
-        {/* Header */}
-        <header className="header">
-          <span className="header-logo">Home<span>Agent</span></span>
-          <span className="header-badge">AI</span>
-          <div className="header-right">
-            <div className="status-dot"/>
-            <span className="status-label">GTA · Live</span>
+        {/* Sidebar */}
+        <aside className="sidebar">
+          <div className="side-head">
+            <div className="brand">
+              <span className="brand-mark"><Icons.Logo/></span>
+              <span className="brand-name">HomeAgent</span>
+            </div>
+            <button className="new-chat" onClick={handleNewChat} title="New chat">
+              <Icons.Plus/>
+            </button>
+          </div>
+
+          <div className="side-section">
+            <div className="side-label">Shortlist</div>
+          </div>
+
+          <div className="side-list">
+            {properties.length > 0 ? (
+              properties.map((p, i) => (
+                <SideCard
+                  key={p.id || i}
+                  prop={p}
+                  active={activeProperty?.id === p.id}
+                  onClick={handleSidebarClick}
+                />
+              ))
+            ) : (
+              <div className="side-empty">
+                Tell HomeAgent what you're looking for. Matching listings will collect here.
+              </div>
+            )}
+          </div>
+
+          <div className="side-foot">
+            <span className="live-pill">
+              <span className="live-dot"/>
+              <span>Live MLS</span>
+            </span>
+            <span>v0.2</span>
+          </div>
+        </aside>
+
+        {/* Chat */}
+        <div className="chat">
+          <div className="chat-head">
+            <div className="chat-title">HomeAgent</div>
+            <div className="chat-sub">conversational property research</div>
             {activeProperty && (
-              <button
-                onClick={() => setMortgageModal(activeProperty)}
-                style={{marginLeft:12, fontSize:12, padding:'5px 12px', background:'var(--accent-dim)', border:'1px solid var(--accent)', borderRadius:20, color:'var(--accent)', cursor:'pointer', fontFamily:'DM Sans, sans-serif'}}
-              >
+              <button className="ghost" onClick={() => setMortgageModal(activeProperty)}>
                 Mortgage calc
               </button>
             )}
           </div>
-        </header>
 
-        {/* Sidebar */}
-        <aside className="sidebar">
-          {properties.length > 0 ? (
-            <>
-              <div className="sidebar-section">
-                <div className="sidebar-label">Shortlist · {properties.length} properties</div>
-                {properties.map(p => (
-                  <PropertyCard
-                    key={p.id}
-                    prop={p}
-                    active={activeProperty?.id === p.id}
-                    onClick={handlePropertyClick}
-                  />
-                ))}
-              </div>
-              {activeProperty && (
-                <div className="sidebar-section">
-                  <div className="sidebar-label">Details</div>
-                  <div style={{background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:'var(--radius)', padding:14}}>
-                    <div style={{fontSize:15, fontWeight:500, color:'var(--cream)', marginBottom:4}}>{activeProperty.address}</div>
-                    <div style={{fontSize:12, color:'var(--text-dim)', marginBottom:10}}>{activeProperty.neighborhood}</div>
-                    {[
-                      ['Commute', activeProperty.commute],
-                      ['Schools', activeProperty.schools],
-                      ['Walk score', activeProperty.walkScore + '/100'],
-                      ['Transit', activeProperty.transitScore + '/100'],
-                    ].map(([k,v]) => (
-                      <div key={k} style={{display:'flex', justifyContent:'space-between', fontSize:12, padding:'4px 0', borderBottom:'1px solid var(--border)'}}>
-                        <span style={{color:'var(--text-dim)'}}>{k}</span>
-                        <span style={{color:'var(--text)'}}>{v}</span>
-                      </div>
-                    ))}
-                    <button
-                      onClick={() => setMortgageModal(activeProperty)}
-                      style={{marginTop:12, width:'100%', padding:'8px', background:'var(--accent-dim)', border:'1px solid var(--accent)', borderRadius:8, color:'var(--accent)', cursor:'pointer', fontSize:13, fontFamily:'DM Sans, sans-serif'}}
-                    >
-                      Calculate mortgage →
-                    </button>
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="empty-sidebar">
-              <div className="icon">🏙</div>
-              <div style={{fontWeight:500, color:'var(--text-dim)', marginBottom:6}}>No listings yet</div>
-              Describe what you're looking for and HomeAgent will build your shortlist here.
-            </div>
-          )}
-        </aside>
-
-        {/* Chat */}
-        <div className="chat-area">
           {!hasMessages ? (
             <div className="welcome">
-              <div className="welcome-title">Find your <em>perfect home</em> in Toronto</div>
-              <div className="welcome-sub">Describe your search in plain English — budget, location, lifestyle. The agent handles the rest.</div>
-              <div className="suggestion-grid">
-                {SUGGESTIONS.map((s,i) => (
-                  <button key={i} className="suggestion" onClick={() => sendMessage(s.text)}>
-                    <strong>{s.title}</strong>
-                    {s.text}
-                  </button>
-                ))}
+              <div className="welcome-inner">
+                <h1 className="greeting">
+                  Good {(() => { const h = new Date().getHours(); return h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening'; })()}.<br/>
+                  What are you looking for <span className="accent">today</span>?
+                </h1>
+                <p className="greeting-sub">
+                  Describe your search in plain English — budget, location, lifestyle. I'll pull live listings and rank them for you.
+                </p>
+                <div className="quick-grid">
+                  {SUGGESTIONS.map((s, i) => (
+                    <button key={i} className="quick" onClick={() => sendMessage(s.text)}>
+                      <span className="quick-title">
+                        <span className="quick-icon">{s.icon}</span>
+                        {s.title}
+                      </span>
+                      <span className="quick-text">{s.text}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           ) : (
             <div className="messages">
               {messages.map((msg, i) => (
                 msg.role === 'user' ? (
-                  <div key={i} className="message user">
-                    <div className="msg-label">You</div>
-                    <div className="msg-bubble">{msg.content}</div>
+                  <div key={i} className="turn">
+                    <div className="user-row">
+                      <div className="user-msg">{msg.content}</div>
+                    </div>
                   </div>
                 ) : (
-                  <AssistantMessage
+                  <AssistantTurn
                     key={i}
                     msg={msg}
+                    activeId={activeProperty?.id}
                     onPropertyClick={handlePropertyClick}
                     onFollowup={sendMessage}
                   />
                 )
               ))}
               {loading && (
-                <div className="message assistant">
-                  <div className="msg-label">HomeAgent</div>
-                  <ThinkingBubble step={thinkStep} />
+                <div className="turn">
+                  <div className="assistant-row">
+                    <div className="avatar"><Icons.Spark/></div>
+                    <div className="assistant-body">
+                      <div className="assistant-name">
+                        HomeAgent
+                        <span className="stamp">working…</span>
+                      </div>
+                      <ThinkingBubble step={thinkStep}/>
+                    </div>
+                  </div>
                 </div>
               )}
-              <div ref={messagesEndRef} />
+              <div ref={messagesEndRef}/>
             </div>
           )}
 
-          <div className="input-bar">
-            <div className="input-row">
-              <textarea
-                ref={textareaRef}
-                className="chat-input"
-                placeholder="3-bed under $900k, good schools, near subway..."
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={handleKey}
-                rows={1}
-                style={{
-                  height: 'auto',
-                  overflow: 'hidden',
-                }}
-                onInput={e => {
-                  e.target.style.height = 'auto';
-                  e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
-                }}
-              />
-              <button className="send-btn" onClick={() => sendMessage()} disabled={!input.trim() || loading}>
-                ↑
-              </button>
+          <div className="input-region">
+            <div className="input-wrap">
+              <div className="input-shell">
+                <textarea
+                  ref={textareaRef}
+                  className="chat-input"
+                  placeholder="Ask about Austin, Tampa, Charlotte, Nashville…"
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={handleKey}
+                  rows={1}
+                  onInput={e => {
+                    e.target.style.height = 'auto';
+                    e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px';
+                  }}
+                />
+                <button className="send-btn" onClick={() => sendMessage()} disabled={!input.trim() || loading}>
+                  <Icons.ArrowUp/>
+                </button>
+              </div>
+              <div className="input-foot">
+                Live MLS data via Repliers · Press <kbd>Enter</kbd> to send
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Mortgage modal */}
         {mortgageModal && (
-          <MortgageModal property={mortgageModal} onClose={() => setMortgageModal(null)} />
+          <MortgageModal property={mortgageModal} onClose={() => setMortgageModal(null)}/>
         )}
       </div>
     </>
