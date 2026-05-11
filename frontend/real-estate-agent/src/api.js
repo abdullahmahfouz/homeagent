@@ -1,4 +1,7 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+// Dev: defaults to the local backend on :8000.
+// Prod (single-service deploy): empty string → fetch hits the same origin that served the page.
+// Override with VITE_API_URL if you ever split the services again.
+const API_URL = import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? "http://localhost:8000" : "");
 
 // Non-streaming — kept for parity / debugging.
 export async function sendMessage(message, sessionId = null) {

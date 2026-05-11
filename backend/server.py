@@ -9,10 +9,12 @@ import json
 import os
 import sys
 import uuid
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from google import genai
 from pydantic import BaseModel
 
@@ -116,3 +118,20 @@ def chat_stream(req: ChatRequest):
 def reset(session_id: str):
     SESSIONS.pop(session_id, None)
     return {"status": "ok"}
+
+
+# ── Serve the built frontend (single-service deploy) ──────────────────────────
+# In dev, Vite serves the frontend on :5173 and this directory won't exist —
+# the block is a no-op. In production (Render), the build step creates dist/
+# and this mounts it alongside the API.
+FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "real-estate-agent" / "dist"
+if FRONTEND_DIST.is_dir():
+    app.mount("/assets", StaticFiles(directory=FRONTEND_DIST / "assets"), name="assets")
+
+    @app.get("/{full_path:path}")
+    def serve_spa(full_path: str):
+        # Top-level files (favicon, vite.svg, etc.) served directly; otherwise the SPA index.
+        candidate = FRONTEND_DIST / full_path
+        if full_path and candidate.is_file():
+            return FileResponse(candidate)
+        return FileResponse(FRONTEND_DIST / "index.html")
