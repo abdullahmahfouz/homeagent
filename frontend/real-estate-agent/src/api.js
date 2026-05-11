@@ -1,20 +1,18 @@
 const API_URL = "http://localhost:8000";
 
-let sessionId = null;
-
-export async function sendMessage(message) {
+// Non-streaming — kept for parity / debugging.
+export async function sendMessage(message, sessionId = null) {
   const res = await fetch(`${API_URL}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message, session_id: sessionId })
+    body: JSON.stringify({ message, session_id: sessionId }),
   });
-
-  const data = await res.json();
-  sessionId = data.session_id;
-  return data;
+  return res.json();
 }
 
-export async function streamMessage(message, onEvent) {
+// Streaming. Caller passes the per-chat sessionId (null on first turn) and an
+// event handler. The `done` event carries the session_id the backend assigned.
+export async function streamMessage(message, onEvent, { sessionId = null } = {}) {
   const res = await fetch(`${API_URL}/chat/stream`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -30,7 +28,6 @@ export async function streamMessage(message, onEvent) {
     if (!line.trim()) return;
     let event;
     try { event = JSON.parse(line); } catch { return; }
-    if (event.type === "done" && event.session_id) sessionId = event.session_id;
     onEvent(event);
   };
 
@@ -47,9 +44,9 @@ export async function streamMessage(message, onEvent) {
   if (buf.trim()) dispatch(buf);
 }
 
-export async function resetSession() {
-  if (sessionId) {
+export async function resetSession(sessionId) {
+  if (!sessionId) return;
+  try {
     await fetch(`${API_URL}/chat/${sessionId}`, { method: "DELETE" });
-    sessionId = null;
-  }
+  } catch {}
 }

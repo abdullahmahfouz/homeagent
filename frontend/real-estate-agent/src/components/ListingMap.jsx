@@ -22,7 +22,7 @@ export function ListingMap({ properties, activeId, onPinClick }) {
     const map = new mapboxgl.Map({
       container: containerRef.current,
       style: "mapbox://styles/mapbox/light-v11",
-      center: [-97.7431, 30.2672], // Austin fallback
+      center: [-97.7431, 30.2672], // Austin default
       zoom: 10,
       attributionControl: false,
       cooperativeGestures: false,

@@ -3,7 +3,8 @@ html, body, #root {
   width: 100%;
   margin: 0;
   padding: 0;
-  background: #F4F1E8;
+  background: #f6f8fb;
+  color-scheme: light;
 }
 
 #root {

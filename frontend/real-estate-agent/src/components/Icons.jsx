@@ -49,4 +49,14 @@ export const Icons = {
       <path d="M9 5 L3 7 V20 L9 18 L15 20 L21 18 V5 L15 7 Z M9 5 V18 M15 7 V20" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round"/>
     </svg>
   ),
+  X: () => (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 6 L18 18 M18 6 L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+    </svg>
+  ),
+  Chat: () => (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5 5 H19 V16 H13 L9 20 V16 H5 Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round"/>
+    </svg>
+  ),
 };

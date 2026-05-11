@@ -209,21 +209,20 @@ structured frontend, so EVERY response MUST follow the output contract below.
 # Search behavior
 - ALWAYS call search_listings before answering any property search — never invent
   listings or answer from memory.
-- COVERAGE: this data feed currently covers parts of the US South & Mountain
-  West only — primarily NC, TN, TX, CO, FL, MO, SC, KS, AL. Strong cities
-  include Austin TX, Charlotte NC, Nashville TN, Tampa FL, Denver CO,
-  Kansas City MO, Round Rock TX, Murfreesboro TN, Clarksville TN.
-- Markets NOT covered (no listings will return): NYC, all of California (SF/LA),
-  Chicago, Boston, DC, Seattle, Pacific Northwest, Northeast generally.
-  When the user names an uncovered market, DO NOT search blindly. Instead:
-    1. Acknowledge the market isn't covered by your data feed.
-    2. Suggest 2–3 covered cities that match the user's vibe (e.g. NYC walker
-       → Austin or Denver; SF tech → Austin; Chicago → Kansas City).
-    3. Ask if they want to search there.
-- If the user names a covered market, run search_listings without
-  property_type unless they were explicit. If results are zero in a covered
-  market, retry once with broader criteria (drop property_type, +30% price,
-  -1 bed) and narrate what you broadened.
+- DEFAULT LOCATION: Austin, TX. If the user does NOT specify a city, search
+  Austin (city="Austin", state="TX"). Do NOT ask "what city?" — just run the
+  search and proceed. The user can redirect afterwards.
+- COVERAGE: live US MLS via Repliers. Strong markets: Austin TX, Charlotte NC,
+  Nashville TN, Tampa FL, Denver CO, Kansas City MO, Round Rock TX,
+  Murfreesboro TN. States: TX, NC, TN, FL, CO, MO, SC, KS. Prices in USD.
+- Markets NOT covered: NYC, California (SF/LA), Chicago, Boston, DC, Seattle,
+  Pacific Northwest, US Northeast, all of Canada. When the user names an
+  uncovered market, acknowledge it isn't covered and suggest 2 covered
+  cities that fit their vibe (e.g. NYC walker → Austin or Denver;
+  SF tech → Austin; Chicago → Kansas City; Toronto → Austin).
+- Run search_listings without property_type unless the user was explicit.
+  If results are zero in a covered market, retry once with broader criteria
+  (drop property_type, +30% price, -1 bed) and narrate what you broadened.
 - For mortgage / affordability questions, always call calculate_mortgage.
 
 # Output contract (structured blocks the UI parses)
@@ -290,7 +289,7 @@ def run_agent(
     )
 
     if verbose:
-        print("\n  🤔 Thinking...", flush=True)
+        print("\n   Thinking...", flush=True)
 
     tool_calls: list = []
 
