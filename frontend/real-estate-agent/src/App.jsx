@@ -62,6 +62,8 @@ export default function HomeAgent() {
   const [loading, setLoading]                   = useState(false);
   const [thinkStep, setThinkStep]               = useState('');
   const [mortgageModal, setMortgageModal]       = useState(null);
+  const [historyDrawerOpen, setHistoryDrawerOpen] = useState(false);
+  const [mobileView, setMobileView]             = useState('chat'); // 'chat' | 'map'
 
   const messagesEndRef = useRef(null);
   const textareaRef    = useRef(null);
@@ -121,6 +123,7 @@ export default function HomeAgent() {
   };
 
   const handleSelectChat = (id) => {
+    setHistoryDrawerOpen(false);
     if (id === currentSessionId) return;
     genRef.current += 1;
     setLoading(false);
@@ -271,40 +274,69 @@ export default function HomeAgent() {
     <div className="app">
 
       <header className="top-bar">
+        <button
+          className="menu-btn"
+          onClick={() => setHistoryDrawerOpen(true)}
+          title="Show chats"
+        >
+          <Icons.Menu/>
+        </button>
+
         <div className="brand">
           <span className="brand-mark"><Icons.Logo/></span>
           <span className="brand-name">HomeAgent</span>
           <span className="brand-tag">beta</span>
         </div>
-        <div className="top-meta">
+
+        <div className="top-meta hide-mobile">
           <span className="dot"/> Live MLS · Repliers
         </div>
         {properties.length > 0 && (
-          <div className="top-meta count-chip">
+          <div className="top-meta count-chip hide-mobile">
             {properties.length} listing{properties.length === 1 ? '' : 's'}
           </div>
         )}
+
+        {/* Mobile-only view switcher */}
+        <div className="view-tabs">
+          <button
+            className={`view-tab ${mobileView === 'chat' ? 'active' : ''}`}
+            onClick={() => setMobileView('chat')}
+          >Chat</button>
+          <button
+            className={`view-tab ${mobileView === 'map' ? 'active' : ''}`}
+            onClick={() => setMobileView('map')}
+          >
+            Map{properties.length > 0 && <span className="view-tab-badge">{properties.length}</span>}
+          </button>
+        </div>
+
         <div className="top-actions">
           <button className="new-chat-btn" onClick={handleNewChat}>
-            <Icons.Plus/><span>New chat</span>
+            <Icons.Plus/><span className="hide-mobile">New chat</span>
           </button>
           {activeProperty && (
-            <button className="ghost" onClick={() => setMortgageModal(activeProperty)}>
+            <button className="ghost hide-mobile" onClick={() => setMortgageModal(activeProperty)}>
               Mortgage
             </button>
           )}
-          <div className="avatar-chip" title="Demo session">AM</div>
+          <div className="avatar-chip hide-tight" title="Demo session">AM</div>
         </div>
       </header>
 
-      <div className="below">
+      <div className={`below view-${mobileView} ${historyDrawerOpen ? 'drawer-open' : ''}`}>
 
-        {/* Left: chat history */}
+        {/* Backdrop for drawer (mobile/tablet only) */}
+        {historyDrawerOpen && (
+          <div className="drawer-backdrop" onClick={() => setHistoryDrawerOpen(false)}/>
+        )}
+
+        {/* Left: chat history (acts as a drawer on narrow screens) */}
         <ChatHistory
           sessions={sortedSessions}
           currentId={currentSessionId}
           onSelect={handleSelectChat}
-          onNew={handleNewChat}
+          onNew={() => { handleNewChat(); setHistoryDrawerOpen(false); }}
           onDelete={handleDeleteChat}
         />
 
