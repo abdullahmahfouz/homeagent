@@ -5,16 +5,18 @@ Run:
     uvicorn server:app --reload --port 8000
 """
 
+import json
 import os
 import sys
 import uuid
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from google import genai
 from pydantic import BaseModel
 
-from agent import run_agent
+from agent import run_agent, run_agent_stream
 
 app = FastAPI(title="HomeAgent API")
 
@@ -80,6 +82,33 @@ def chat(req: ChatRequest):
         response=text,
         session_id=session_id,
         tool_calls=[ToolCall(**tc) for tc in tool_calls],
+    )
+
+
+@app.post("/chat/stream")
+def chat_stream(req: ChatRequest):
+    if not req.message.strip():
+        raise HTTPException(status_code=400, detail="message is required")
+
+    session_id = req.session_id or str(uuid.uuid4())
+    history = SESSIONS.get(session_id, [])
+
+    def event_stream():
+        captured_history = history  # default: keep prior history if stream errors
+        try:
+            for event in run_agent_stream(client, req.message, history):
+                if event.get("type") == "done":
+                    captured_history = event.pop("history", history)  # not JSON-serializable
+                    event["session_id"] = session_id
+                yield json.dumps(event) + "\n"
+            SESSIONS[session_id] = captured_history
+        except Exception as e:
+            yield json.dumps({"type": "error", "message": str(e)}) + "\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="application/x-ndjson",
+        headers={"X-Accel-Buffering": "no"},  # disable proxy buffering if any
     )
 
 

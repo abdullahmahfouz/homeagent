@@ -3,3 +3,10 @@ venv/
 __pycache__/
 node_modules/
 .DS_Store
+dist/
+build/
+*.log
+*.pyc
+*.pyo
+*.env
+*.env.local  

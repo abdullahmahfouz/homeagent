@@ -83,7 +83,12 @@ def search_listings(
     for l in listings:
         addr = l.get("address", {}) or {}
         details = l.get("details", {}) or {}
+        mp = l.get("map", {}) or {}
         street = f"{addr.get('streetNumber','')} {addr.get('streetName','')} {addr.get('streetSuffix','')}".strip()
+        # Repliers returns lat/lng as strings sometimes; coerce to float
+        def _f(v):
+            try: return float(v) if v is not None else None
+            except (TypeError, ValueError): return None
         results.append({
             "id": l.get("mlsNumber"),
             "address": street,
@@ -98,6 +103,8 @@ def search_listings(
             "property_type": details.get("propertyType", "") or l.get("class", ""),
             "days_on_market": l.get("daysOnMarket"),
             "image": (lambda imgs: f"https://cdn.repliers.io/{imgs[0]}?class=medium" if imgs else None)(l.get("images") or []),
+            "lat": _f(mp.get("latitude")),
+            "lng": _f(mp.get("longitude")),
         })
 
     return {"count": len(results), "listings": results}
@@ -255,9 +262,10 @@ commute, schools — estimate these from your knowledge of the neighborhood:
   Asterisks render as raw characters in the UI.
 - DO NOT write inline lists of suggestions like "* Adjust your budget" — put
   those in the FOLLOWUPS block instead.
+- DO NOT narrate tool actions in prose ("Searching MLS...", "Pulling scores...").
+  The UI shows tool calls live as they fire — narrating them is redundant.
 - Lead with one specific sentence summarizing what you found.
-- If you broadened the search, narrate the change as one short line ending in
-  "..." (e.g. "Broadening to townhouses..."). Keep total prose to 2–4 sentences.
+- Keep total prose to 1–3 sentences.
 
 Be specific, confident, concise. Prices in USD."""
 
@@ -313,6 +321,66 @@ def run_agent(
                 types.Part.from_function_response(name=fc.name, response={"result": result})
             )
 
+        contents.append(types.Content(role="user", parts=function_response_parts))
+
+
+def run_agent_stream(client: genai.Client, user_message: str, history: list):
+    """Streaming agent loop. Yields dict events:
+        {"type":"text",       "chunk": "..."}
+        {"type":"tool_start", "name": "...", "args": {...}}
+        {"type":"tool_end",   "name": "...", "result": {...}}
+        {"type":"done",       "tool_calls": [...], "history": [...]}   # history is non-JSON; server pops it.
+    """
+    contents = list(history) + [
+        types.Content(role="user", parts=[types.Part(text=user_message)])
+    ]
+    config = types.GenerateContentConfig(
+        system_instruction=SYSTEM,
+        tools=[types.Tool(function_declarations=FUNCTION_DECLARATIONS)],
+        automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
+        temperature=0.3,
+    )
+
+    tool_calls_log: list = []
+
+    while True:
+        full_text = ""
+        pending_calls: list = []
+
+        for chunk in client.models.generate_content_stream(
+            model=MODEL, contents=contents, config=config
+        ):
+            if not chunk.candidates:
+                continue
+            for part in (chunk.candidates[0].content.parts or []):
+                if getattr(part, "text", None):
+                    full_text += part.text
+                    yield {"type": "text", "chunk": part.text}
+                if getattr(part, "function_call", None):
+                    pending_calls.append(part.function_call)
+
+        # Reconstruct the model's turn for history continuity
+        model_parts: list = []
+        if full_text:
+            model_parts.append(types.Part(text=full_text))
+        for fc in pending_calls:
+            model_parts.append(types.Part(function_call=fc))
+        contents.append(types.Content(role="model", parts=model_parts))
+
+        if not pending_calls:
+            yield {"type": "done", "tool_calls": tool_calls_log, "history": contents}
+            return
+
+        function_response_parts = []
+        for fc in pending_calls:
+            args = dict(fc.args or {})
+            yield {"type": "tool_start", "name": fc.name, "args": args}
+            result = dispatch_tool(fc.name, args)
+            tool_calls_log.append({"name": fc.name, "args": args, "result": result})
+            yield {"type": "tool_end", "name": fc.name, "result": result}
+            function_response_parts.append(
+                types.Part.from_function_response(name=fc.name, response={"result": result})
+            )
         contents.append(types.Content(role="user", parts=function_response_parts))
 
 
