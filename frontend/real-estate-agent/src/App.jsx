@@ -248,7 +248,10 @@ export default function HomeAgent() {
       clearInterval(stepInterval);
       setLoading(false);
       if (!isAlive()) return;
-      const fail = "I couldn't reach the local agent. Make sure the API is running on port 8000.\n<<<FOLLOWUPS:[\"Try again\",\"Check connection\"]>>>";
+      // Rate-limit / budget / size errors carry their own copy from the server.
+      const fail = err?.userFacing
+        ? `${err.message}\n<<<FOLLOWUPS:["Try again later","What can HomeAgent do?"]>>>`
+        : "I couldn't reach the local agent. Make sure the API is running on port 8000.\n<<<FOLLOWUPS:[\"Try again\",\"Check connection\"]>>>";
       setMessages(prev => {
         const last = prev[prev.length - 1];
         if (last && last.role === 'assistant' && last.streaming) {
