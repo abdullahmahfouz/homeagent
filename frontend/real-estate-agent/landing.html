@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HomeAgent - Ask for a home in plain English</title>
+  <meta name="description" content="HomeAgent searches live MLS listings, runs the mortgage math, and maps what actually fits. Describe the home you want in a sentence." />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+  <meta property="og:title" content="HomeAgent - Ask for a home in plain English" />
+  <meta property="og:description" content="Live MLS search, mortgage math, and an interactive map, driven by a conversation." />
+  <meta property="og:type" content="website" />
+
+  <meta name="theme-color" content="#fbfcfd" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0b0e13" media="(prefers-color-scheme: dark)" />
+
+  <link rel="preload" href="/fonts/ibm-plex-sans-600-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/ibm-plex-sans-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <!-- The hero screenshot is the LCP element; start it with the stylesheet. Matched to
+       the <picture> breakpoint so a phone never preloads the 313KB desktop crop. -->
+  <link rel="preload" href="/img/app-overview.jpg" as="image" fetchpriority="high" media="(min-width: 768px)" />
+  <link rel="preload" href="/img/app-overview-mobile.jpg" as="image" fetchpriority="high" media="(max-width: 767px)" />
+  <link rel="stylesheet" href="/src/landing/landing.css" />
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="nav-in">
+    <a class="brand" href="/landing.html">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.62,0l80,80A16,16,0,0,1,224,120Z"/></svg></span>
+      <span class="brand-name">HomeAgent</span>
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#how">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#questions">Questions</a>
+    </nav>
+    <a class="btn btn-primary btn-sm" href="/">Open the app</a>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ══ Hero: asymmetric split ══ -->
+  <section class="hero">
+    <div class="hero-in">
+      <div class="hero-copy">
+        <h1 class="display reveal" data-reveal>Ask for a home in plain English.</h1>
+        <p class="lede reveal" data-reveal data-delay="1">
+          HomeAgent searches live MLS listings, runs the mortgage math, and maps what actually fits.
+        </p>
+        <div class="hero-cta reveal" data-reveal data-delay="2">
+          <a class="btn btn-primary" href="/">Open the app <span aria-hidden="true">&rarr;</span></a>
+          <a class="btn btn-ghost" href="#how">How it works</a>
+        </div>
+      </div>
+
+      <div class="hero-visual reveal" data-reveal data-delay="2">
+        <!-- Art direction, not just resizing: the full-app shot is 2160px of UI, so at
+             phone width its text is sub-pixel. The mobile crop drops the empty sidebar
+             and the far edge of the map, keeping the cards legible and all five pins in
+             frame. Both files are 4:3, so the reserved box is identical and CLS stays 0. -->
+        <picture>
+          <source media="(max-width: 767px)" srcset="/img/app-overview-mobile.jpg" width="900" height="675" />
+          <img class="shot shot-4x3" src="/img/app-overview.jpg" width="1440" height="1080"
+               fetchpriority="high" decoding="async"
+               alt="The HomeAgent app: a chat pane listing five ranked Austin homes beside a map of the metro area with a price pin on each one." />
+        </picture>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ Built on: logo row ══ -->
+  <section class="builton" aria-label="Technology behind HomeAgent">
+    <div class="wrap builton-in reveal" data-reveal>
+      <p class="builton-label">Built on</p>
+      <ul class="logos">
+        <li><img src="https://cdn.simpleicons.org/googlegemini" alt="Google Gemini" width="30" height="30" loading="lazy" /></li>
+        <li><img src="https://cdn.simpleicons.org/mapbox" alt="Mapbox" width="30" height="30" loading="lazy" /></li>
+        <li><img src="https://cdn.simpleicons.org/fastapi" alt="FastAPI" width="30" height="30" loading="lazy" /></li>
+        <li><img src="https://cdn.simpleicons.org/react" alt="React" width="30" height="30" loading="lazy" /></li>
+        <li><img src="https://cdn.simpleicons.org/vite" alt="Vite" width="30" height="30" loading="lazy" /></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══ How it works: staggered vertical flow ══ -->
+  <section id="how" class="how">
+    <div class="wrap">
+      <h2 class="h2 reveal" data-reveal>From a sentence to a shortlist.</h2>
+
+      <ol class="steps">
+        <li class="step reveal" data-reveal>
+          <h3 class="step-title">Ask</h3>
+          <p class="step-body">Type what you want the way you would say it out loud. Budget, neighborhood, beds, commute, schools.</p>
+        </li>
+        <li class="step reveal" data-reveal data-delay="1">
+          <h3 class="step-title">Watch</h3>
+          <p class="step-body">Every MLS search and mortgage calculation appears as it runs, so you can see what the answer is built on.</p>
+        </li>
+        <li class="step reveal" data-reveal data-delay="2">
+          <h3 class="step-title">Compare</h3>
+          <p class="step-body">Results land on a map and in a scrollable strip. Click a pin to focus a listing, then keep going.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ══ Features: 5 items, 5 cells, asymmetric ══ -->
+  <section id="features" class="features">
+    <div class="wrap">
+      <h2 class="h2 reveal" data-reveal>What the agent actually does.</h2>
+
+      <div class="bento">
+
+        <article class="cell cell-wide reveal" data-reveal>
+          <div class="cell-media">
+            <img class="shot shot-16x10" src="/img/tool-calls.jpg" width="1200" height="750"
+                 loading="lazy" decoding="async"
+                 alt="A completed MLS search shown in the chat: &ldquo;Searching MLS in Austin, TX, 3+ bd, under $900K&rdquo; with a result chip reading five listings, followed by the agent's written answer." />
+          </div>
+          <div class="cell-text">
+            <h3 class="cell-title">Live tool calls</h3>
+            <p class="cell-body">Each listing search and mortgage calculation renders as it runs, then flips to a result you can check.</p>
+          </div>
+        </article>
+
+        <article class="cell cell-accent reveal" data-reveal data-delay="1">
+          <div class="cell-text">
+            <h3 class="cell-title">Answers that stream</h3>
+            <p class="cell-body">Tokens arrive as the model writes them. No spinner standing in for progress.</p>
+          </div>
+        </article>
+
+        <article class="cell cell-tint reveal" data-reveal>
+          <div class="cell-text">
+            <h3 class="cell-title">Mortgage math</h3>
+            <p class="cell-body">Conventional US terms, with PMI added automatically when the down payment is under 20 percent.</p>
+          </div>
+        </article>
+
+        <article class="cell cell-wide reveal" data-reveal data-delay="1">
+          <div class="cell-media">
+            <img class="shot shot-16x10" src="/img/map-pins.jpg" width="1200" height="750"
+                 loading="lazy" decoding="async"
+                 alt="A map of Austin with five price pins: $825K, $312K, $600K, $720K and $369K. The $369K pin is highlighted as the active listing." />
+          </div>
+          <div class="cell-text">
+            <h3 class="cell-title">A map that responds</h3>
+            <p class="cell-body">Price pins for the active result set. Click a pin to focus a listing, or a card to fly the map to it.</p>
+          </div>
+        </article>
+
+        <article class="cell cell-full reveal" data-reveal>
+          <div class="cell-text">
+            <h3 class="cell-title">Sessions that persist</h3>
+            <p class="cell-body">Conversations are saved to your browser. Come back to a search from last week and pick it up where you stopped.</p>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ Mortgage: worked example, accent-tinted panel ══ -->
+  <section class="money">
+    <div class="wrap">
+      <div class="money-panel reveal" data-reveal>
+        <div class="money-copy">
+          <h2 class="h2 h2-tight">The payment math, done in the chat.</h2>
+          <p class="body">
+            Ask what a listing costs per month and the agent runs the same conventional
+            calculation a lender would start from, PMI included.
+          </p>
+        </div>
+
+        <figure class="money-fig">
+          <figcaption class="money-cap">
+            Example: $635,000 at 10&#37; down, 30 years, 6.5&#37; APR
+          </figcaption>
+          <dl class="money-rows">
+            <div><dt>Down payment</dt><dd>$63,500</dd></div>
+            <div><dt>Loan amount</dt><dd>$571,500</dd></div>
+            <div><dt>Principal and interest</dt><dd>$3,612</dd></div>
+            <div><dt>PMI</dt><dd>$381</dd></div>
+          </dl>
+          <p class="money-total"><span>Monthly</span><strong>$3,993</strong></p>
+          <p class="money-note">
+            Illustrative figures produced by the app's own calculation. Taxes, insurance,
+            and HOA dues are not included.
+          </p>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ Questions: accordion ══ -->
+  <section id="questions" class="faq">
+    <div class="wrap wrap-narrow">
+      <h2 class="h2 reveal" data-reveal>Questions.</h2>
+
+      <div class="faq-list reveal" data-reveal>
+        <details class="qa">
+          <summary>Where do the listings come from?</summary>
+          <div class="qa-body"><p>Live US MLS data through the Repliers API. Results reflect the current active set rather than a cached snapshot.</p></div>
+        </details>
+        <details class="qa">
+          <summary>Is the mortgage estimate accurate?</summary>
+          <div class="qa-body"><p>It uses standard US conventional terms, including PMI above 80 percent LTV. Treat it as an estimate rather than a quote. Taxes, insurance, and rates vary by county and lender.</p></div>
+        </details>
+        <details class="qa">
+          <summary>Which model runs the agent?</summary>
+          <div class="qa-body"><p>Gemini 2.5 Flash with function calling. The agent loop itself is roughly eighty lines of Python.</p></div>
+        </details>
+        <details class="qa">
+          <summary>Do I need an account?</summary>
+          <div class="qa-body"><p>No. Open the app and start typing. Sessions are stored in your browser, so nothing is tied to a login.</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ Closing CTA ══ -->
+  <section class="close">
+    <div class="wrap wrap-narrow close-in reveal" data-reveal>
+      <h2 class="h2">Start with a sentence.</h2>
+      <p class="body">Describe the home you are looking for and let the agent do the searching.</p>
+      <a class="btn btn-primary" href="/">Open the app <span aria-hidden="true">&rarr;</span></a>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <a class="brand" href="/landing.html">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 256 256" fill="currentColor"><path d="M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.62,0l80,80A16,16,0,0,1,224,120Z"/></svg></span>
+      <span class="brand-name">HomeAgent</span>
+    </a>
+    <nav class="foot-links" aria-label="Footer">
+      <a href="#how">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#questions">Questions</a>
+      <a href="https://github.com/abdullahmahfouz/homeagent" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <a href="/">Open the app</a>
+    </nav>
+  </div>
+</footer>
+
+<script type="module" src="/src/landing/landing.js"></script>
+</body>
+</html>
