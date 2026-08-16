@@ -1,10 +1,16 @@
+/* Document-level reset. Colour, type and radius live in ./theme.css, which
+   styles.css imports; this file only owns the shell the app mounts into.
+   The literal is the pre-theme fallback, not a second source of truth. */
+
 html, body, #root {
   height: 100%;
   width: 100%;
   margin: 0;
   padding: 0;
-  background: #f6f8fb;
-  color-scheme: light;
+}
+
+body {
+  background: var(--bg, #fbfcfd);
 }
 
 #root {

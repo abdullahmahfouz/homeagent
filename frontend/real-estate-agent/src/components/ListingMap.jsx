@@ -1,16 +1,24 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { formatPrice } from '../lib/parse.js';
 
-// Token is read at module load — set VITE_MAPBOX_TOKEN in .env.local
-// and restart Vite. Without a token the component renders a placeholder.
+// Token is read at module load. Set VITE_MAPBOX_TOKEN in .env.local and
+// restart Vite. Without a token the component renders a placeholder.
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || "";
+
+// The map is half the window. A light basemap beside a dark UI is the page
+// splitting into two themes, so the basemap follows the same preference the
+// rest of the app does, and keeps following it if the user flips it.
+const DARK_QUERY = '(prefers-color-scheme: dark)';
+const styleFor = (dark) =>
+  dark ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11';
 
 export function ListingMap({ properties, activeId, onPinClick }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const markersRef = useRef(new Map()); // id -> mapboxgl.Marker
+  const [initError, setInitError] = useState(null);
 
   // Keep onPinClick stable for the long-lived event listener
   const onPinClickRef = useRef(onPinClick);
@@ -19,16 +27,35 @@ export function ListingMap({ properties, activeId, onPinClick }) {
   // Init the map once
   useEffect(() => {
     if (!mapboxgl.accessToken || !containerRef.current || mapRef.current) return;
-    const map = new mapboxgl.Map({
-      container: containerRef.current,
-      style: "mapbox://styles/mapbox/light-v11",
-      center: [-97.7431, 30.2672], // Austin default
-      zoom: 10,
-      attributionControl: false,
-      cooperativeGestures: false,
-    });
+    const media = window.matchMedia(DARK_QUERY);
+
+    // mapboxgl throws synchronously when WebGL is unavailable (blocked by
+    // policy, disabled in the browser, software rendering off). That throw
+    // happens during commit, so without this guard it unmounts the whole app
+    // and the user gets a blank page instead of a chat they can still use.
+    let map;
+    try {
+      map = new mapboxgl.Map({
+        container: containerRef.current,
+        style: styleFor(media.matches),
+        center: [-97.7431, 30.2672], // Austin default
+        zoom: 10,
+        attributionControl: false,
+        cooperativeGestures: false,
+      });
+    } catch (err) {
+      setInitError(err);
+      return;
+    }
     mapRef.current = map;
+
+    // Markers are DOM overlays rather than style layers, so they survive the
+    // swap and keep their positions.
+    const onSchemeChange = (e) => map.setStyle(styleFor(e.matches));
+    media.addEventListener('change', onSchemeChange);
+
     return () => {
+      media.removeEventListener('change', onSchemeChange);
       map.remove();
       mapRef.current = null;
       markersRef.current.clear();
@@ -101,6 +128,15 @@ export function ListingMap({ properties, activeId, onPinClick }) {
       <div className="map-placeholder">
         <b>Map</b>
         Set <code>VITE_MAPBOX_TOKEN</code> in <code>.env.local</code> and restart Vite to enable. Free token at <code>account.mapbox.com</code>.
+      </div>
+    );
+  }
+  if (initError) {
+    return (
+      <div className="map-placeholder">
+        <b>Map unavailable</b>
+        This browser could not start WebGL, so the map cannot draw. The chat and
+        the listing results work as usual.
       </div>
     );
   }

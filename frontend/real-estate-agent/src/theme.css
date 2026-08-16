@@ -1,0 +1,215 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   HomeAgent theme
+   The single source of truth for type, colour, radius and motion. Both
+   entry points import this: src/styles.css (the app) and
+   src/landing/landing.css (the marketing page). Neither redefines a
+   primitive; they alias these names, so the two pages cannot drift apart.
+
+   LOCKS
+   - Theme .... light and dark, driven by prefers-color-scheme. A page is
+                entirely one or the other. No section inverts.
+   - Accent ... exactly one hue, --accent. No second colour carries meaning
+                anywhere, in either mode.
+   - Radius ... one five-step scale below. Nothing invents its own.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── IBM Plex Sans + Mono, self-hosted (latin, latin-ext) ─────────────────
+   Served from public/fonts. No CDN request on the critical path.        */
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-sans-400-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-sans-400-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-sans-500-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-sans-500-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-sans-600-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-sans-600-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-mono-400-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-mono-400-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-mono-500-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-mono-500-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ── light ───────────────────────────────────────────────────────────── */
+
+:root {
+  color-scheme: light dark;
+
+  /* surfaces, coolest to most raised */
+  --bg:            #fbfcfd;
+  --surface:       #ffffff;
+  --surface-2:     #f4f6f9;
+  --surface-3:     #e7ebf1;
+  --surface-4:     #d7dde6;
+
+  --border:        #e4e8ee;
+  --border-strong: #cfd6e0;
+  --hairline:      rgba(16, 22, 32, 0.05);
+
+  /* ink, darkest to lightest. --ink-faint is the floor for anything that
+     has to stay legible: 4.6:1 on --bg. Nothing readable goes below it. */
+  --ink:           #101620;
+  --ink-2:         #38414f;
+  --ink-dim:       #5f6a7a;
+  --ink-faint:     #737e8e;
+  --ink-ghost:     #b8c0cc;
+
+  /* the one accent. --accent-text is the readable-on-tint variant, which is
+     darker than --accent in light mode and lighter in dark mode. */
+  --accent:        #1d4ed8;
+  --accent-ink:    #ffffff;
+  --accent-text:   #1a45bd;
+  --accent-soft:   rgba(29, 78, 216, 0.06);
+  --accent-mid:    rgba(29, 78, 216, 0.14);
+  --accent-line:   rgba(29, 78, 216, 0.22);
+
+  /* state. Semantic only: these never decorate. */
+  --pos:           #15803d;
+  --pos-soft:      rgba(21, 128, 61, 0.10);
+  --err:           #c92a2a;
+  --err-soft:      rgba(201, 42, 42, 0.10);
+
+  /* chrome that sits over photography or the map, where the page surface
+     tokens would disappear */
+  --scrim:         rgba(16, 22, 32, 0.45);
+  --over-media:    rgba(255, 255, 255, 0.94);
+  --over-media-ink: #101620;
+  --over-dark:     rgba(16, 22, 32, 0.82);
+  --over-dark-ink: #ffffff;
+  --pin:           #ffffff;
+  --pin-halo:      rgba(255, 255, 255, 0.9);
+
+  /* shadows are tinted with the background hue, never pure black */
+  --shadow-sm: 0 1px 2px rgba(16, 22, 32, 0.05);
+  --shadow:    0 6px 20px -10px rgba(16, 22, 32, 0.16), 0 1px 0 var(--hairline) inset;
+  --shadow-lg: 0 24px 60px -24px rgba(16, 22, 32, 0.26);
+
+  /* one radius scale. Every corner on either page is one of these five.
+     Scrollbar thumbs and slider tracks are excluded: their radius is half
+     their own height, which is geometry rather than a style choice. */
+  --r-0:    3px;   /* micro chips under 20px tall */
+  --r-1:    6px;   /* controls, tags, tool rows */
+  --r-2:   10px;   /* buttons, inputs, cards */
+  --r-3:   16px;   /* panels, modals, bento cells */
+  --r-pill: 999px; /* marketing CTAs and count badges only */
+
+  --font-ui:   'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── dark ────────────────────────────────────────────────────────────────
+   Same roles, same hierarchy, same one accent. Off-black rather than
+   #000 so raised surfaces still have somewhere to go.                   */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:            #0b0e13;
+    --surface:       #12161d;
+    --surface-2:     #171c25;
+    --surface-3:     #1f2530;
+    --surface-4:     #2b323e;
+
+    --border:        #232935;
+    --border-strong: #333b4a;
+    --hairline:      rgba(255, 255, 255, 0.05);
+
+    --ink:           #eef1f6;
+    --ink-2:         #c3cad5;
+    --ink-dim:       #949daa;
+    --ink-faint:     #7d8797;
+    --ink-ghost:     #414a58;
+
+    --accent:        #6f9bff;
+    --accent-ink:    #08111f;
+    --accent-text:   #94b4ff;
+    --accent-soft:   rgba(111, 155, 255, 0.09);
+    --accent-mid:    rgba(111, 155, 255, 0.18);
+    --accent-line:   rgba(111, 155, 255, 0.26);
+
+    --pos:           #55c57a;
+    --pos-soft:      rgba(85, 197, 122, 0.12);
+    --err:           #f0736b;
+    --err-soft:      rgba(240, 115, 107, 0.12);
+
+    --scrim:         rgba(3, 5, 9, 0.62);
+    --over-media:    rgba(18, 22, 29, 0.92);
+    --over-media-ink: #eef1f6;
+    --over-dark:     rgba(3, 5, 9, 0.78);
+    --over-dark-ink: #eef1f6;
+    --pin:           #171c25;
+    --pin-halo:      rgba(11, 14, 19, 0.9);
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow:    0 6px 20px -10px rgba(0, 0, 0, 0.55), 0 1px 0 var(--hairline) inset;
+    --shadow-lg: 0 24px 60px -24px rgba(0, 0, 0, 0.7);
+  }
+}
