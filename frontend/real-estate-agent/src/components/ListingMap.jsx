@@ -20,6 +20,11 @@ export function ListingMap({ properties, activeId, onPinClick }) {
   const markersRef = useRef(new Map()); // id -> mapboxgl.Marker
   const [initError, setInitError] = useState(null);
 
+  // The framing the marker effect last asked for, replayed once the container
+  // reports a real size. See the resize effect below.
+  const lastFitRef = useRef(null);
+  const sizedRef = useRef(false);
+
   // Keep onPinClick stable for the long-lived event listener
   const onPinClickRef = useRef(onPinClick);
   useEffect(() => { onPinClickRef.current = onPinClick; }, [onPinClick]);
@@ -100,13 +105,45 @@ export function ListingMap({ properties, activeId, onPinClick }) {
     }
 
     if (points.length === 1) {
+      lastFitRef.current = { center: [points[0].lng, points[0].lat] };
       map.flyTo({ center: [points[0].lng, points[0].lat], zoom: 13, duration: 600 });
     } else if (points.length > 1) {
       const bounds = new mapboxgl.LngLatBounds();
       points.forEach(p => bounds.extend([p.lng, p.lat]));
+      lastFitRef.current = { bounds };
       map.fitBounds(bounds, { padding: 36, duration: 700, maxZoom: 14 });
     }
   }, [properties]);
+
+  // Mapbox measures the container once, in the constructor. On mobile the map is
+  // built inside the hidden half of the Chat/Map switcher, so it measures 0 and
+  // falls back to a 400x300 canvas that it keeps after the region is revealed —
+  // the map paints a band across the top and leaves dead space below. Its own
+  // trackResize observer does not recover from that, so observe the container
+  // and resize on any non-zero change. This also covers rotation and the mobile
+  // URL bar collapsing.
+  useEffect(() => {
+    const map = mapRef.current;
+    const el = containerRef.current;
+    if (!map || !el || typeof ResizeObserver === 'undefined') return;
+
+    const ro = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      if (width < 1 || height < 1) return;
+      map.resize();
+
+      // Any framing computed against the 400x300 fallback was fitted to the
+      // wrong aspect, so replay it once now that the real size is known.
+      if (sizedRef.current) return;
+      sizedRef.current = true;
+      const fit = lastFitRef.current;
+      if (fit?.bounds) map.fitBounds(fit.bounds, { padding: 36, duration: 0, maxZoom: 14 });
+      else if (fit?.center) map.jumpTo({ center: fit.center, zoom: 13 });
+    });
+
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // React to activeId — restyle pins and fly to the active one
   useEffect(() => {
