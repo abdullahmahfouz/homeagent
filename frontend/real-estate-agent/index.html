@@ -7,12 +7,19 @@
     <title>HomeAgent</title>
     <meta name="description" content="Describe the home you want in plain English. HomeAgent searches live MLS listings, ranks what fits, and prices the monthly payment." />
 
-    <!-- The two weights that paint first: body copy and the welcome headline. -->
-    <link rel="preload" href="/fonts/ibm-plex-sans-400-latin.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="/fonts/ibm-plex-sans-500-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- TODO: replace https://example.com with the production domain once deployed. -->
+    <meta property="og:title" content="HomeAgent" />
+    <meta property="og:description" content="Describe the home you want in plain English. HomeAgent searches live MLS listings, ranks what fits, and prices the monthly payment." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://example.com/" />
+    <link rel="canonical" href="https://example.com/" />
 
-    <meta name="theme-color" content="#fbfcfd" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0b0e13" media="(prefers-color-scheme: dark)" />
+    <!-- The two faces that paint first: body copy (Satoshi) and the welcome headline (Newsreader). -->
+    <link rel="preload" href="/fonts/satoshi-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/newsreader-latin.woff2" as="font" type="font/woff2" crossorigin />
+
+    <meta name="theme-color" content="#f6f2e8" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0e1611" media="(prefers-color-scheme: dark)" />
   </head>
   <body>
     <div id="root"></div>

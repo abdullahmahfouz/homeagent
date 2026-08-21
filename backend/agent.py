@@ -9,6 +9,7 @@ import os
 import sys
 from typing import Any
 
+import requests
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
@@ -19,6 +20,82 @@ MODEL = "gemini-2.5-flash"
 
 # ─── Tool functions ───────────────────────────────────────────────────────────
 
+PROPERTY_TYPE_CLASS_MATCH = {
+    "condo":        ("condo",),
+    "singlefamily": ("residential", "freehold"),
+    "townhouse":    ("residential", "freehold"),
+    "multifamily":  ("multifamily", "multi"),
+}
+
+
+def _safe_float(v) -> float | None:
+    """Repliers returns lat/lng as strings sometimes; coerce to float."""
+    try:
+        return float(v) if v is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _filter_by_property_type(listings: list, property_type: str | None) -> list:
+    """Repliers' `class` field is the property class; filter post-hoc since the
+    API itself only accepts a sale/lease `type`, not this."""
+    if not property_type:
+        return listings
+    normalized = property_type.lower().replace("-", "").replace(" ", "")
+    class_match = PROPERTY_TYPE_CLASS_MATCH.get(normalized, (normalized,))
+    return [
+        listing for listing in listings
+        if any(m in (listing.get("class", "") or "").lower() for m in class_match)
+    ]
+
+
+def _filter_by_min_sqft(listings: list, min_sqft: int) -> list:
+    if not min_sqft:
+        return listings
+    return [
+        listing for listing in listings
+        if (listing.get("details", {}) or {}).get("sqft", 0) >= min_sqft
+    ]
+
+
+def _shape_listing(listing: dict) -> dict:
+    addr = listing.get("address", {}) or {}
+    details = listing.get("details", {}) or {}
+    map_data = listing.get("map", {}) or {}
+    street = f"{addr.get('streetNumber','')} {addr.get('streetName','')} {addr.get('streetSuffix','')}".strip()
+    images = listing.get("images") or []
+    return {
+        "id": listing.get("mlsNumber"),
+        "address": street,
+        "city": addr.get("city", ""),
+        "state": addr.get("state", ""),
+        "zip": addr.get("zip", ""),
+        "neighborhood": addr.get("neighborhood", ""),
+        "price": listing.get("listPrice", 0),
+        "beds": details.get("numBedrooms", 0),
+        "baths": details.get("numBathrooms", 0),
+        "sqft": details.get("sqft", 0),
+        "property_type": details.get("propertyType", "") or listing.get("class", ""),
+        "days_on_market": listing.get("daysOnMarket"),
+        "image": f"https://cdn.repliers.io/{images[0]}?class=medium" if images else None,
+        "lat": _safe_float(map_data.get("latitude")),
+        "lng": _safe_float(map_data.get("longitude")),
+    }
+
+
+def _fetch_listings(params: dict, api_key: str) -> dict:
+    response = requests.get(
+        "https://api.repliers.io/listings",
+        params=params,
+        headers={"repliers-api-key": api_key},
+        timeout=15,
+    )
+    if response.status_code != 200:
+        return {"error": f"Repliers API returned {response.status_code}: {response.text[:200]}"}
+    data = response.json()
+    return {"listings": data.get("listings", []) if isinstance(data, dict) else data}
+
+
 def search_listings(
     max_price: int = 1000000,
     min_beds: int = 1,
@@ -28,7 +105,6 @@ def search_listings(
     min_sqft: int = 0,
 ) -> dict:
     api_key = os.getenv("REPLIERS_API_KEY")
-
     if not api_key:
         return {
             "error": "REPLIERS_API_KEY not set in backend/.env",
@@ -36,7 +112,6 @@ def search_listings(
             "listings": [],
         }
 
-    import requests
     # Repliers `type` field is the transaction type (sale/lease), NOT property class.
     # We always want for-sale listings; property class filtering is done post-hoc.
     params = {
@@ -50,63 +125,15 @@ def search_listings(
     if state:
         params["state"] = state
 
-    response = requests.get(
-        "https://api.repliers.io/listings",
-        params=params,
-        headers={"repliers-api-key": api_key},
-    )
-    if response.status_code != 200:
-        return {
-            "error": f"Repliers API returned {response.status_code}: {response.text[:200]}",
-            "count": 0,
-            "listings": [],
-        }
-    data = response.json()
-    listings = data.get("listings", []) if isinstance(data, dict) else data
+    fetched = _fetch_listings(params, api_key)
+    if "error" in fetched:
+        return {"error": fetched["error"], "count": 0, "listings": []}
 
-    # Optional post-filter on property class
-    if property_type:
-        pt = property_type.lower().replace("-", "").replace(" ", "")
-        class_match = {
-            "condo":        ("condo",),
-            "singlefamily": ("residential", "freehold"),
-            "townhouse":    ("residential", "freehold"),
-            "multifamily":  ("multifamily", "multi"),
-        }.get(pt, (pt,))
-        listings = [
-            l for l in listings
-            if any(m in (l.get("class", "") or "").lower() for m in class_match)
-        ]
+    listings = _filter_by_property_type(fetched["listings"], property_type)
+    listings = _filter_by_min_sqft(listings, min_sqft)
     listings = listings[:5]
 
-    results = []
-    for l in listings:
-        addr = l.get("address", {}) or {}
-        details = l.get("details", {}) or {}
-        mp = l.get("map", {}) or {}
-        street = f"{addr.get('streetNumber','')} {addr.get('streetName','')} {addr.get('streetSuffix','')}".strip()
-        # Repliers returns lat/lng as strings sometimes; coerce to float
-        def _f(v):
-            try: return float(v) if v is not None else None
-            except (TypeError, ValueError): return None
-        results.append({
-            "id": l.get("mlsNumber"),
-            "address": street,
-            "city": addr.get("city", ""),
-            "state": addr.get("state", ""),
-            "zip": addr.get("zip", ""),
-            "neighborhood": addr.get("neighborhood", ""),
-            "price": l.get("listPrice", 0),
-            "beds": details.get("numBedrooms", 0),
-            "baths": details.get("numBathrooms", 0),
-            "sqft": details.get("sqft", 0),
-            "property_type": details.get("propertyType", "") or l.get("class", ""),
-            "days_on_market": l.get("daysOnMarket"),
-            "image": (lambda imgs: f"https://cdn.repliers.io/{imgs[0]}?class=medium" if imgs else None)(l.get("images") or []),
-            "lat": _f(mp.get("latitude")),
-            "lng": _f(mp.get("longitude")),
-        })
-
+    results = [_shape_listing(listing) for listing in listings]
     return {"count": len(results), "listings": results}
 
 
@@ -195,6 +222,11 @@ def dispatch_tool(name: str, args: dict) -> Any:
         return fn(**args)
     except TypeError as e:
         return {"error": f"Bad args for {name}: {e}"}
+    except Exception as e:
+        # Anything the tool raises (network timeout, upstream 5xx, bad payload)
+        # comes back to the model as a structured error instead of killing the
+        # agent loop. The model can then retry or explain the failure.
+        return {"error": f"{name} failed: {type(e).__name__}: {e}"}
 
 
 # ─── Agent loop ───────────────────────────────────────────────────────────────
@@ -269,6 +301,21 @@ commute, schools — estimate these from your knowledge of the neighborhood:
 Be specific, confident, concise. Prices in USD."""
 
 
+def _build_generation_config() -> types.GenerateContentConfig:
+    return types.GenerateContentConfig(
+        system_instruction=SYSTEM,
+        tools=[types.Tool(function_declarations=FUNCTION_DECLARATIONS)],
+        automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
+        temperature=0.3,
+    )
+
+
+def _build_initial_contents(history: list, user_message: str) -> list:
+    return list(history) + [
+        types.Content(role="user", parts=[types.Part(text=user_message)])
+    ]
+
+
 def run_agent(
     client: genai.Client,
     user_message: str,
@@ -277,16 +324,8 @@ def run_agent(
 ) -> tuple[str, list, list]:
     """Run one turn of the agent loop. Returns (response_text, updated_history, tool_calls)."""
 
-    contents = list(history) + [
-        types.Content(role="user", parts=[types.Part(text=user_message)])
-    ]
-
-    config = types.GenerateContentConfig(
-        system_instruction=SYSTEM,
-        tools=[types.Tool(function_declarations=FUNCTION_DECLARATIONS)],
-        automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
-        temperature=0.3,
-    )
+    contents = _build_initial_contents(history, user_message)
+    config = _build_generation_config()
 
     if verbose:
         print("\n   Thinking...", flush=True)
@@ -330,15 +369,8 @@ def run_agent_stream(client: genai.Client, user_message: str, history: list):
         {"type":"tool_end",   "name": "...", "result": {...}}
         {"type":"done",       "tool_calls": [...], "history": [...]}   # history is non-JSON; server pops it.
     """
-    contents = list(history) + [
-        types.Content(role="user", parts=[types.Part(text=user_message)])
-    ]
-    config = types.GenerateContentConfig(
-        system_instruction=SYSTEM,
-        tools=[types.Tool(function_declarations=FUNCTION_DECLARATIONS)],
-        automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
-        temperature=0.3,
-    )
+    contents = _build_initial_contents(history, user_message)
+    config = _build_generation_config()
 
     tool_calls_log: list = []
 

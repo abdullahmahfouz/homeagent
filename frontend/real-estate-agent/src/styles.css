@@ -72,13 +72,11 @@ button { font: inherit; color: inherit; background: none; border: none; }
 }
 .brand:hover .brand-name { color: var(--accent-deep); }
 .brand-mark {
-  width: 26px; height: 26px;
-  border-radius: var(--r-1);
-  background: var(--accent);
-  color: var(--accent-ink);
+  width: 24px; height: 24px;
+  color: var(--accent);
   display: flex; align-items: center; justify-content: center;
 }
-.brand-mark svg { width: 16px; height: 16px; }
+.brand-mark svg { width: 20px; height: 20px; }
 .brand-name {
   font-weight: 500;
   font-size: 14px;
@@ -518,11 +516,10 @@ button { font: inherit; color: inherit; background: none; border: none; }
   gap: 10px;
 }
 .listing-price {
+  font-family: var(--font-mono);
   font-size: 17px;
   font-weight: 600;
   color: var(--ink);
-  letter-spacing: -0.02em;
-  font-feature-settings: 'tnum';
 }
 .listing-walk {
   font-family: var(--font-mono);
@@ -628,11 +625,11 @@ button { font: inherit; color: inherit; background: none; border: none; }
   justify-content: center;
 }
 .greeting {
-  font-family: var(--font-ui);
-  font-weight: 500;
+  font-family: var(--font-heading);
+  font-weight: 600;
   font-size: 28px;
-  line-height: 1.14;
-  letter-spacing: -0.02em;
+  line-height: 1.2;
+  letter-spacing: -0.005em;
   color: var(--ink);
   margin-bottom: 12px;
 }
@@ -919,11 +916,10 @@ button { font: inherit; color: inherit; background: none; border: none; }
   gap: 1px;
 }
 .strip-price {
+  font-family: var(--font-mono);
   font-size: 13.5px;
   font-weight: 600;
   color: var(--ink);
-  letter-spacing: -0.015em;
-  font-feature-settings: 'tnum';
 }
 .strip-addr {
   font-size: 11.5px;
@@ -985,10 +981,11 @@ button { font: inherit; color: inherit; background: none; border: none; }
   margin-bottom: 6px;
 }
 .modal-title {
-  font-size: 20px;
-  font-weight: 500;
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 600;
   color: var(--ink);
-  letter-spacing: -0.018em;
+  letter-spacing: 0;
   margin-bottom: 4px;
 }
 .modal-sub {
@@ -1078,10 +1075,9 @@ button { font: inherit; color: inherit; background: none; border: none; }
   padding-top: 12px;
 }
 .result-row.total .rv {
-  font-family: var(--font-ui);
-  font-size: 20px;
-  color: var(--accent);
-  letter-spacing: -0.02em;
+  font-family: var(--font-mono);
+  font-size: 26px;
+  color: var(--accent-text);
   font-weight: 600;
 }
 .result-row.total .rv .per {
@@ -1198,8 +1194,8 @@ button { font: inherit; color: inherit; background: none; border: none; }
   }
   .brand-tag { display: none; }
   .brand-name { font-size: 13px; }
-  .brand-mark { width: 24px; height: 24px; }
-  .brand-mark svg { width: 14px; height: 14px; }
+  .brand-mark { width: 22px; height: 22px; }
+  .brand-mark svg { width: 18px; height: 18px; }
 
   .hide-mobile { display: none !important; }
   .view-tabs { display: inline-flex; }
