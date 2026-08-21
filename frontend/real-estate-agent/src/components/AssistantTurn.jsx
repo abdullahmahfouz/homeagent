@@ -24,7 +24,7 @@ export function AssistantTurn({ msg, activeId, onPropertyClick, onFollowup }) {
   return (
     <div className="turn">
       <div className="assistant-row">
-        <div className="avatar"><Icons.Spark/></div>
+        <div className="avatar"><Icons.Logo/></div>
         <div className="assistant-body">
           <div className="assistant-name">HomeAgent</div>
 

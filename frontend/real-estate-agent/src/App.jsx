@@ -276,7 +276,7 @@ export default function HomeAgent() {
           <Icons.Menu/>
         </button>
 
-        <a className="brand" href="/landing.html">
+        <a className="brand" href="/">
           <span className="brand-mark"><Icons.Logo/></span>
           <span className="brand-name">HomeAgent</span>
         </a>
@@ -377,7 +377,7 @@ export default function HomeAgent() {
               {loading && (
                 <div className="turn">
                   <div className="assistant-row">
-                    <div className="avatar"><Icons.Spark/></div>
+                    <div className="avatar"><Icons.Logo/></div>
                     <div className="assistant-body">
                       <div className="assistant-name">
                         HomeAgent <span className="stamp">working…</span>

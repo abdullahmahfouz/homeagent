@@ -141,8 +141,8 @@ VITE_MAPBOX_TOKEN=pk.eyJ1...
 
 ## Usage
 
-Once both servers are running, open http://localhost:5173 and type a request
-in plain English, for example:
+Once both servers are running, open http://localhost:5173/app and type a
+request in plain English, for example:
 
 > 3 bedroom homes in Austin under $700k with a short commute
 

@@ -10,7 +10,6 @@
  * callers stay `<Icons.Foo/>` with no props and nothing can drift.
  */
 import { HouseIcon } from '@phosphor-icons/react/dist/csr/House';
-import { SparkleIcon } from '@phosphor-icons/react/dist/csr/Sparkle';
 import { PlusIcon } from '@phosphor-icons/react/dist/csr/Plus';
 import { ArrowUpIcon } from '@phosphor-icons/react/dist/csr/ArrowUp';
 import { CheckIcon } from '@phosphor-icons/react/dist/csr/Check';
@@ -27,7 +26,6 @@ const mark = { weight: 'fill', size: '100%' };
 
 export const Icons = {
   Logo:     () => <HouseIcon {...mark} />,
-  Spark:    () => <SparkleIcon {...mark} />,
   Star:     () => <StarIcon {...mark} />,
 
   Plus:     () => <PlusIcon {...line} />,
