@@ -8,38 +8,57 @@
    LOCKS
    - Theme .... light and dark, driven by prefers-color-scheme. A page is
                 entirely one or the other. No section inverts.
-   - Accent ... exactly one hue, --accent. No second colour carries meaning
-                anywhere, in either mode.
-   - Radius ... one five-step scale below. Nothing invents its own.
+   - Accent ... near-black/near-white neutral, --accent. Colour is scarce:
+                the four --tag-*-bg/text pairs are the ONLY hues on either
+                page, and they carry semantic meaning only (tags, badges,
+                the mortgage chart legend) - never a large surface, never
+                a primary button.
+   - Radius ... one five-step scale below. Nothing invents its own. --r-pill
+                is small tags/badges/circular buttons only, never a large
+                container or card.
    ═══════════════════════════════════════════════════════════════════════ */
 
-/* ── Satoshi + Newsreader + Plex Mono, self-hosted (latin, latin-ext) ────
-   Served from public/fonts. No CDN request on the critical path. Satoshi is
-   the UI/body face, Newsreader is headings and large display numbers (the
-   one place a display serif is earned: real-estate marketing is a genuinely
-   editorial category), Plex Mono is untouched and carries all listing/spec
-   numerals.                                                              */
+/* ── Geist + Newsreader + Geist Mono, self-hosted (latin, latin-ext) ─────
+   Served from public/fonts. No CDN request on the critical path. Geist is
+   the UI/body face (geometric sans with real character, not Inter), Newsreader
+   is headings and large display numbers (the one place a display serif is
+   earned: real-estate marketing is a genuinely editorial category), Geist
+   Mono carries all listing/spec numerals and code-like metadata.        */
 
+/* Geist and Geist Mono both ship as one variable woff2 per subset, covering
+   the full weight axis - one @font-face per subset with a weight RANGE,
+   same pattern as Newsreader below. */
 @font-face {
-  font-family: 'Satoshi';
+  font-family: 'Geist';
   font-style: normal;
-  font-weight: 400;
+  font-weight: 400 700;
   font-display: swap;
-  src: url('/fonts/satoshi-400.woff2') format('woff2');
+  src: url('/fonts/geist-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 @font-face {
-  font-family: 'Satoshi';
+  font-family: 'Geist';
   font-style: normal;
-  font-weight: 500;
+  font-weight: 400 700;
   font-display: swap;
-  src: url('/fonts/satoshi-500.woff2') format('woff2');
+  src: url('/fonts/geist-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: 'Satoshi';
+  font-family: 'Geist Mono';
   font-style: normal;
-  font-weight: 700;
+  font-weight: 400 600;
   font-display: swap;
-  src: url('/fonts/satoshi-700.woff2') format('woff2');
+  src: url('/fonts/geist-mono-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url('/fonts/geist-mono-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 /* Newsreader ships to the browser as one variable file per subset/style,
    covering the full weight axis - so one @font-face per subset, with a
@@ -77,73 +96,43 @@
   src: url('/fonts/newsreader-italic-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
-@font-face {
-  font-family: 'IBM Plex Mono';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('/fonts/ibm-plex-mono-400-latin-ext.woff2') format('woff2');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-@font-face {
-  font-family: 'IBM Plex Mono';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('/fonts/ibm-plex-mono-400-latin.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: 'IBM Plex Mono';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('/fonts/ibm-plex-mono-500-latin-ext.woff2') format('woff2');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-@font-face {
-  font-family: 'IBM Plex Mono';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src: url('/fonts/ibm-plex-mono-500-latin.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
 /* ── light ───────────────────────────────────────────────────────────── */
 
 :root {
   color-scheme: light dark;
 
-  /* surfaces, coolest to most raised. Warm bone/paper, not cool slate. */
-  --bg:            #f6f2e8;
-  --surface:       #fcfaf4;
-  --surface-2:     #f0ebdd;
-  --surface-3:     #e6dfcc;
-  --surface-4:     #d8cfb5;
+  /* surfaces, coolest to most raised. Warm bone/paper canvas, pure-white
+     raised surfaces: colour is scarce here, spent only on tags below. */
+  --bg:            #f7f6f3;
+  --surface:       #ffffff;
+  --surface-2:     #f9f9f8;
+  --surface-3:     #f1f0ed;
+  --surface-4:     #eaeaea;
 
-  --border:        #e0d8c2;
-  --border-strong: #c9be9e;
-  --hairline:      rgba(24, 42, 32, 0.06);
+  --border:        #eaeaea;
+  --border-strong: #d8d8d5;
+  --hairline:      rgba(0, 0, 0, 0.06);
 
-  /* ink, darkest to lightest, all deep forest, not slate-blue-black.
+  /* ink, darkest to lightest. Never absolute black.
      --ink-faint is the floor for anything that has to stay legible:
      4.6:1 on --bg. Nothing readable goes below it. */
-  --ink:           #182a20;
-  --ink-2:         #3a4f42;
-  --ink-dim:       #5c7267;
-  --ink-faint:     #5f6f65;
-  --ink-ghost:     #b7c2b8;
+  --ink:           #111111;
+  --ink-2:         #2f3437;
+  --ink-dim:       #787774;
+  --ink-faint:     #706f6c;
+  --ink-ghost:     #c7c6c2;
 
-  /* the one accent: warm amber/gold. Nothing else on the page is saturated.
-     --accent-text is the readable-on-tint variant, darker than --accent in
-     light mode and lighter in dark mode. */
-  --accent:        #c99a2e;
-  --accent-ink:    #182a20;
-  --accent-text:   #8a6416;
-  --accent-soft:   rgba(201, 154, 46, 0.08);
-  --accent-mid:    rgba(201, 154, 46, 0.16);
-  --accent-line:   rgba(201, 154, 46, 0.24);
+  /* the "accent" is near-black, not a hue: this protocol's CTAs are neutral.
+     --accent-text existing for backward-compat call sites, resolves to the
+     same charcoal as --ink-2. Colour itself is reserved for the tag pairs
+     below, never for large surfaces or primary buttons. */
+  --accent:        #111111;
+  --accent-ink:    #ffffff;
+  --accent-hover:  #333333;   /* protocol's exact hover target: lightens, doesn't darken */
+  --accent-text:   #2f3437;
+  --accent-soft:   rgba(17, 17, 17, 0.04);
+  --accent-mid:    rgba(17, 17, 17, 0.08);
+  --accent-line:   rgba(17, 17, 17, 0.14);
 
   /* state. Semantic only: these never decorate. */
   --pos:           #127033;
@@ -151,43 +140,55 @@
   --err:           #c92a2a;
   --err-soft:      rgba(201, 42, 42, 0.10);
 
+  /* four desaturated pastel pairs: the ONLY colour on either page, spent
+     exclusively on small semantic tags/badges (never large surfaces, never
+     buttons). bg/text pairs are each contrast-checked at >=4.5:1. */
+  --tag-red-bg:     #fdebec;
+  --tag-red-text:   #9f2f2d;
+  --tag-blue-bg:    #e1f3fe;
+  --tag-blue-text:  #1f6c9f;
+  --tag-green-bg:   #edf3ec;
+  --tag-green-text: #346538;
+  --tag-yellow-bg:    #fbf3db;
+  --tag-yellow-text:  #956400;
+
   /* --chart-1/2/3 are a three-way legend for the mortgage cost breakdown,
-     nowhere else. Tonal variations of ink/accent, not a second accent hue:
-     the amber "New" badge and the chart's primary slice both read as the
-     one accent, doing double duty rather than needing a spare colour. */
-  --chart-1:        var(--accent);
-  --chart-2:        #6b8068;
-  --chart-3:        #7e9279;
+     nowhere else. Reuse the tag text hues rather than inventing a spare
+     palette: blue = primary/neutral figure, yellow = notable, green = calm. */
+  --chart-1:        var(--tag-blue-text);
+  --chart-2:        var(--tag-yellow-text);
+  --chart-3:        var(--tag-green-text);
 
   /* chrome that sits over photography or the map, where the page surface
      tokens would disappear */
-  --scrim:         rgba(24, 42, 32, 0.45);
-  --over-media:    rgba(252, 250, 244, 0.94);
-  --over-media-ink: #182a20;
-  --over-dark:     rgba(14, 22, 17, 0.82);
-  --over-dark-ink: #f6f2e8;
-  --pin:           #fcfaf4;
-  --pin-halo:      rgba(252, 250, 244, 0.9);
+  --scrim:         rgba(17, 17, 17, 0.45);
+  --over-media:    rgba(255, 255, 255, 0.94);
+  --over-media-ink: #111111;
+  --over-dark:     rgba(17, 17, 17, 0.82);
+  --over-dark-ink: #f7f6f3;
+  --pin:           #ffffff;
+  --pin-halo:      rgba(255, 255, 255, 0.9);
 
-  /* shadows are tinted with the background hue, never pure black */
-  --shadow-sm: 0 1px 2px rgba(24, 42, 32, 0.05);
-  --shadow:    0 6px 20px -10px rgba(24, 42, 32, 0.14), 0 1px 0 var(--hairline) inset;
-  --shadow-lg: 0 24px 60px -24px rgba(24, 42, 32, 0.22);
+  /* shadows are near-invisible per this protocol: ultra-diffuse, <0.05 opacity */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow:    0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.045);
 
   /* one radius scale. Every corner on either page is one of these five.
      Scrollbar thumbs and slider tracks are excluded: their radius is half
      their own height, which is geometry rather than a style choice.
-     --r-pill is reserved for count badges and fully circular icon buttons
-     only; primary CTAs use --r-2, not full-pill. */
+     --r-pill is reserved for small tags/count badges and fully circular
+     icon buttons only; no rounded-full on large containers, cards, or
+     primary buttons per this protocol. */
   --r-0:    3px;   /* micro chips under 20px tall */
-  --r-1:    6px;   /* controls, tags, tool rows */
-  --r-2:   10px;   /* buttons, inputs, cards */
-  --r-3:   16px;   /* panels, modals, bento cells */
-  --r-pill: 999px; /* count badges and circular icon buttons only */
+  --r-1:    6px;   /* controls, tags, tool rows, buttons */
+  --r-2:   10px;   /* inputs, cards */
+  --r-3:   12px;   /* panels, modals, bento cells - protocol's 8-12px ceiling */
+  --r-pill: 999px; /* small tags, count badges, circular icon buttons only */
 
-  --font-ui:      'Satoshi', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-ui:      'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-heading: 'Newsreader', Georgia, serif;
-  --font-mono:    'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+  --font-mono:    'Geist Mono', ui-monospace, 'SF Mono', monospace;
 
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -198,48 +199,64 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg:            #0e1611;
-    --surface:       #141f19;
-    --surface-2:     #1b2820;
-    --surface-3:     #23332a;
-    --surface-4:     #344339;
+    --bg:            #17181a;
+    --surface:       #1e1f21;
+    --surface-2:     #232426;
+    --surface-3:     #2a2b2d;
+    --surface-4:     #333335;
 
-    --border:        #344339;
-    --border-strong: #45573c;
-    --hairline:      rgba(237, 232, 218, 0.06);
+    --border:        rgba(255, 255, 255, 0.09);
+    --border-strong: rgba(255, 255, 255, 0.16);
+    --hairline:      rgba(255, 255, 255, 0.06);
 
-    --ink:           #ede8da;
-    --ink-2:         #c7c2b0;
-    --ink-dim:       #9ca093;
-    --ink-faint:     #8ba398;
-    --ink-ghost:     #48513f;
+    --ink:           #f2f1ee;
+    --ink-2:         #d8d6d1;
+    --ink-dim:       #9b9890;
+    --ink-faint:     #8b8985;
+    --ink-ghost:     #4a4a4c;
 
-    --accent:        #d9ac49;
-    --accent-ink:    #14210f;
-    --accent-text:   #e7c067;
-    --accent-soft:   rgba(217, 172, 73, 0.09);
-    --accent-mid:    rgba(217, 172, 73, 0.18);
-    --accent-line:   rgba(217, 172, 73, 0.26);
+    /* inverted: light neutral CTA on the dark page, for contrast */
+    --accent:        #f2f1ee;
+    --accent-ink:    #17181a;
+    --accent-hover:  #dcdad6;   /* dims slightly on hover, mirroring the light-mode direction */
+    --accent-text:   #d8d6d1;
+    --accent-soft:   rgba(242, 241, 238, 0.06);
+    --accent-mid:    rgba(242, 241, 238, 0.12);
+    --accent-line:   rgba(242, 241, 238, 0.20);
 
     --pos:           #55c57a;
     --pos-soft:      rgba(85, 197, 122, 0.12);
     --err:           #f0736b;
     --err-soft:      rgba(240, 115, 107, 0.12);
 
-    --chart-1:        var(--accent);
-    --chart-2:        #6e8571;
-    --chart-3:        #9db09a;
+    /* tag bg/text pairs, computed against --surface (where tags actually
+       sit) via relative luminance, each verified >=5:1 for a safety margin
+       above the 4.5:1 floor - the light-mode hex values, translucent over
+       this dark surface, land too dark to read at the light-mode text hues,
+       so both halves of each pair are re-tuned here, not just the bg. */
+    --tag-red-bg:     rgba(159, 47, 45, 0.18);
+    --tag-red-text:   #c68483;
+    --tag-blue-bg:    rgba(31, 108, 159, 0.20);
+    --tag-blue-text:  #70a1c2;
+    --tag-green-bg:   rgba(52, 101, 56, 0.20);
+    --tag-green-text: #83a186;
+    --tag-yellow-bg:    rgba(149, 100, 0, 0.20);
+    --tag-yellow-text:  #b99957;
 
-    --scrim:         rgba(6, 10, 8, 0.62);
-    --over-media:    rgba(20, 31, 25, 0.92);
-    --over-media-ink: #ede8da;
-    --over-dark:     rgba(6, 10, 8, 0.78);
-    --over-dark-ink: #ede8da;
-    --pin:           #1b2820;
-    --pin-halo:      rgba(14, 22, 17, 0.9);
+    --chart-1:        var(--tag-blue-text);
+    --chart-2:        var(--tag-yellow-text);
+    --chart-3:        var(--tag-green-text);
 
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow:    0 6px 20px -10px rgba(0, 0, 0, 0.55), 0 1px 0 var(--hairline) inset;
-    --shadow-lg: 0 24px 60px -24px rgba(0, 0, 0, 0.7);
+    --scrim:         rgba(6, 7, 8, 0.62);
+    --over-media:    rgba(30, 31, 33, 0.92);
+    --over-media-ink: #f2f1ee;
+    --over-dark:     rgba(6, 7, 8, 0.78);
+    --over-dark-ink: #f2f1ee;
+    --pin:           #232426;
+    --pin-halo:      rgba(23, 24, 26, 0.9);
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow:    0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.35);
   }
 }

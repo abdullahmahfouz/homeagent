@@ -11,7 +11,7 @@
   /* radius roles, mapped onto the shared four-step scale */
   --r-panel: var(--r-3);
   --r-chip:  var(--r-1);
-  --r-btn:   var(--r-2);   /* CTAs are not full-pill by default; --r-pill stays for count badges and circular icon buttons only */
+  --r-btn:   var(--r-1);   /* protocol's 4-6px CTA ceiling; --r-pill stays for count badges and circular icon buttons only */
 
   /* page rhythm: gutter and the gap between sections */
   --gut:  clamp(1.25rem, 4vw, 2.5rem);
@@ -79,7 +79,7 @@ a { color: inherit; text-decoration: none; }
   font-family: var(--font-heading);
   font-size: clamp(2.4rem, 5.3vw, 4.15rem);
   line-height: 1.1;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.03em;
   font-weight: 600;
   text-wrap: balance;
 }
@@ -87,8 +87,8 @@ a { color: inherit; text-decoration: none; }
 .h2 {
   font-family: var(--font-heading);
   font-size: clamp(1.75rem, 3.1vw, 2.6rem);
-  line-height: 1.18;
-  letter-spacing: -0.008em;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
   font-weight: 600;
   text-wrap: balance;
   margin-bottom: clamp(2.25rem, 4vw, 3.25rem);
@@ -129,7 +129,7 @@ a { color: inherit; text-decoration: none; }
 
 /* accent bg + accent-ink text: measured 6.70:1 light, 7.03:1 dark. Passes AA. */
 .btn-primary { background: var(--accent); color: var(--accent-ink); }
-.btn-primary:hover { background: color-mix(in srgb, var(--accent) 88%, black); }
+.btn-primary:hover { background: var(--accent-hover); }
 .btn-primary:active { transform: scale(0.98); }
 
 .btn-ghost {
@@ -219,17 +219,39 @@ a { color: inherit; text-decoration: none; }
 
 /* ── hero preview: real chat-turn / listing-card markup, not a screenshot ──
    Ported 1:1 from the app's own class names (src/styles.css) so this is the
-   actual product UI rendered with static example content, not a mockup. No
-   outer card, no border, no shadow: each piece keeps its own component
-   framing and floats directly on the page, which is what avoids the
-   floating-browser-screenshot silhouette the rest of this file was built to
-   get away from.                                                          */
+   actual product UI rendered with static example content, not a mockup.
+   Framed in a minimal faux-OS window (a plain top bar + three small dots,
+   no traffic-light colour, no gradient) rather than a floating card with a
+   drop-shadow: that's a considered software-mockup convention, not the
+   generic floating-browser-screenshot cliche the rest of this file avoids. */
+
+.window-chrome {
+  max-width: 30rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-3);
+  background: var(--surface);
+  overflow: hidden;
+}
+.window-chrome-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+.window-chrome-bar span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
 
 .hero-preview {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  max-width: 30rem;
+  padding: 20px;
 }
 
 .turn { width: 100%; }
@@ -376,7 +398,7 @@ a { color: inherit; text-decoration: none; }
   border: 1px solid var(--border);
   border-radius: var(--r-panel);
   background: var(--surface);
-  padding: clamp(1.35rem, 2vw, 1.75rem);
+  padding: clamp(1.5rem, 2.2vw, 2.5rem);
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -503,20 +525,25 @@ a { color: inherit; text-decoration: none; }
 .qa summary::-webkit-details-marker { display: none; }
 .qa summary:hover { color: var(--accent); }
 
-/* CSS chevron, not a hand-drawn SVG icon path */
+/* Sharp +/- toggle, not a chevron and not a hand-drawn SVG icon path: a
+   horizontal bar (::before) that's always there, plus a vertical bar
+   (::after) that fades/rotates away on [open] so + becomes -. */
+.qa summary::before,
 .qa summary::after {
   content: "";
   position: absolute;
   right: 6px;
   top: 50%;
-  width: 9px;
-  height: 9px;
-  border-right: 2px solid var(--ink-dim);
-  border-bottom: 2px solid var(--ink-dim);
-  transform: translateY(-70%) rotate(45deg);
+  width: 10px;
+  height: 1.5px;
+  background: var(--ink-dim);
+  transform: translateY(-50%);
+}
+.qa summary::after {
+  transform: translateY(-50%) rotate(90deg);
   transition: transform 0.25s var(--ease);
 }
-.qa[open] summary::after { transform: translateY(-30%) rotate(-135deg); }
+.qa[open] summary::after { transform: translateY(-50%) rotate(0deg); }
 
 .qa-body { padding-bottom: 1.5rem; }
 .qa-body p { color: var(--ink-dim); max-width: 62ch; line-height: 1.68; }
@@ -567,8 +594,8 @@ a { color: inherit; text-decoration: none; }
 
 .js [data-reveal] {
   opacity: 0;
-  transform: translateY(14px);
-  transition: opacity 0.62s var(--ease), transform 0.62s var(--ease);
+  transform: translateY(12px);
+  transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
 }
 .js [data-reveal][data-delay="1"] { transition-delay: 0.08s; }
 .js [data-reveal][data-delay="2"] { transition-delay: 0.16s; }
@@ -602,7 +629,7 @@ a { color: inherit; text-decoration: none; }
   .hero-in { grid-template-columns: 1fr; gap: 2.5rem; }
   .hero-cta { margin-top: 1.75rem; }
   .hero-cta .btn { flex: 1 1 auto; justify-content: center; }
-  .hero-preview { max-width: none; }
+  .window-chrome { max-width: none; }
   .hero-preview .listing-grid { grid-template-columns: 1fr; max-width: 220px; margin-inline: auto; }
 
   .steps { grid-template-columns: 1fr; gap: 2rem; }

@@ -1,8 +1,8 @@
 <!-- HomeAgent mark: the same house glyph the app and the landing nav use,
      on the accent square. Phosphor House (fill weight), MIT licensed. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
-  <rect width="256" height="256" rx="56" fill="#c99a2e"/>
-  <g transform="translate(48,49) scale(0.625)" fill="#182a20">
+  <rect width="256" height="256" rx="56" fill="#111111"/>
+  <g transform="translate(48,49) scale(0.625)" fill="#ffffff">
     <path d="M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.62,0l80,80A16,16,0,0,1,224,120Z"/>
   </g>
 </svg>

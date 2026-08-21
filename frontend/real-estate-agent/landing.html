@@ -24,8 +24,8 @@
   <meta name="twitter:description" content="Live MLS search, mortgage math, and an interactive map, driven by a conversation." />
   <meta name="twitter:image" content="https://example.com/img/app-overview.jpg" />
 
-  <meta name="theme-color" content="#f6f2e8" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#0e1611" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#17181a" media="(prefers-color-scheme: dark)" />
 
   <script type="application/ld+json">
   {
@@ -80,7 +80,7 @@
 
   <!-- The hero visual is real chat-turn/listing-card markup now (see .hero-preview),
        not a screenshot, so the LCP element is the headline text, not an image. -->
-  <link rel="preload" href="/fonts/satoshi-500.woff2" as="font" type="font/woff2" crossorigin fetchpriority="high" />
+  <link rel="preload" href="/fonts/geist-latin.woff2" as="font" type="font/woff2" crossorigin fetchpriority="high" />
   <link rel="preload" href="/fonts/newsreader-latin.woff2" as="font" type="font/woff2" crossorigin fetchpriority="high" />
   <link rel="stylesheet" href="/src/landing/landing.css" />
 </head>
@@ -122,9 +122,13 @@
       <div class="hero-visual reveal" data-reveal data-delay="2">
         <!-- Not a screenshot: this is the app's real chat-turn and listing-card markup,
              styled with the same tokens and hand-placed here as static example content.
-             No outer frame, no drop-shadow, no floating-browser-mockup silhouette, just
-             the actual UI sitting on the page like it does inside the app. -->
-        <div class="hero-preview" aria-hidden="true" role="presentation">
+             Framed in a minimal faux-OS window (plain top bar, three small dots) rather
+             than a floating card with a drop-shadow. -->
+        <div class="window-chrome">
+          <div class="window-chrome-bar" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </div>
+          <div class="hero-preview" aria-hidden="true" role="presentation">
           <div class="turn">
             <div class="user-row">
               <div class="user-msg">3 bed under $900k near downtown, quick commute</div>
@@ -187,6 +191,7 @@
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>

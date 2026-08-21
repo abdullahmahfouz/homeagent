@@ -14,7 +14,7 @@
   /* --bg-2 is the raised chrome: top bar, chat panel, map region, composer */
   --bg-2:          var(--surface);
 
-  --accent-bright: color-mix(in srgb, var(--accent) 88%, black);
+  --accent-bright: var(--accent-hover);
   --accent-deep:   var(--accent-text);
 
   --r-sm: var(--r-1);
@@ -375,13 +375,20 @@ button { font: inherit; color: inherit; background: none; border: none; }
 .tool-line .tool-text { flex: 1; }
 .tool-line .tool-detail { color: var(--ink-faint); margin-left: 8px; }
 .tool-line .tool-summary {
-  font-size: 10.5px;
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  /* neutral fallback; each --kind below overrides bg/color as a pair */
   color: var(--ink-dim);
   background: var(--surface-2);
-  border: 1px solid var(--border);
-  padding: 1px 7px;
-  border-radius: var(--r-0);
 }
+.tool-summary--error   { color: var(--tag-red-text);    background: var(--tag-red-bg); }
+.tool-summary--empty   { color: var(--tag-yellow-text); background: var(--tag-yellow-bg); }
+.tool-summary--success { color: var(--tag-green-text);  background: var(--tag-green-bg); }
+.tool-summary--info    { color: var(--tag-blue-text);   background: var(--tag-blue-bg); }
 
 /* ── Prose ── */
 .prose {
@@ -628,8 +635,8 @@ button { font: inherit; color: inherit; background: none; border: none; }
   font-family: var(--font-heading);
   font-weight: 600;
   font-size: 28px;
-  line-height: 1.2;
-  letter-spacing: -0.005em;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
   color: var(--ink);
   margin-bottom: 12px;
 }
@@ -984,8 +991,9 @@ button { font: inherit; color: inherit; background: none; border: none; }
   font-family: var(--font-heading);
   font-size: 22px;
   font-weight: 600;
+  line-height: 1.1;
   color: var(--ink);
-  letter-spacing: 0;
+  letter-spacing: -0.02em;
   margin-bottom: 4px;
 }
 .modal-sub {

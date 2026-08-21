@@ -21,22 +21,29 @@ export function formatToolCall(name, args) {
   return { text: name, detail: '' };
 }
 
+// `kind` maps each result to one of the four semantic tag colors: a tool
+// call either failed (red), came back empty (yellow, a soft warning rather
+// than a hard failure), found something (green), or returned a neutral
+// figure like a price (blue). No 5th color, no decoration.
 export function formatToolResult(name, result) {
-  if (!result) return '';
-  if (result.error) return 'error';
+  if (!result) return { text: '', kind: 'neutral' };
+  if (result.error) return { text: 'error', kind: 'error' };
   if (name === 'search_listings') {
     const c = result.count || 0;
-    return c === 0 ? 'no results' : `${c} listing${c === 1 ? '' : 's'}`;
+    return c === 0
+      ? { text: 'no results', kind: 'empty' }
+      : { text: `${c} listing${c === 1 ? '' : 's'}`, kind: 'success' };
   }
   if (name === 'calculate_mortgage' && result.monthly_payment) {
-    return `$${result.monthly_payment.toLocaleString()}/mo`;
+    return { text: `$${result.monthly_payment.toLocaleString()}/mo`, kind: 'info' };
   }
-  return '';
+  return { text: '', kind: 'neutral' };
 }
 
 export function ToolLine({ event }) {
   const running = event.status === 'running';
   const call = formatToolCall(event.name, event.args);
+  const summary = !running && formatToolResult(event.name, event.result);
   return (
     <div className={`tool-line ${running ? 'running' : 'done'}`}>
       {running
@@ -46,8 +53,8 @@ export function ToolLine({ event }) {
         {call.text}
         {call.detail && <span className="tool-detail">{call.detail}</span>}
       </span>
-      {!running && (
-        <span className="tool-summary">{formatToolResult(event.name, event.result)}</span>
+      {summary && summary.text && (
+        <span className={`tool-summary tool-summary--${summary.kind}`}>{summary.text}</span>
       )}
     </div>
   );
