@@ -23,17 +23,17 @@ an interactive map.
 
 ## What it does
 
-- **Conversational search** — describe a home in natural language (budget,
+- **Conversational search**: describe a home in natural language (budget,
   location, beds, schools, commute, lifestyle) and the agent searches live MLS
   listings.
-- **Streaming responses** — tokens stream from Gemini as they're generated.
-- **Live tool-call visualization** — every `search_listings` or `calculate_mortgage`
+- **Streaming responses**: tokens stream from Gemini as they're generated.
+- **Live tool-call visualization**: every `search_listings` or `calculate_mortgage`
   call renders as a spinner that flips to a checkmark + result chip when done.
-- **Interactive map** — Mapbox dark map with price-pill pins. Click a pin to
+- **Interactive map**: Mapbox dark map with price-pill pins. Click a pin to
   focus a listing; click a listing card to fly the map to it.
-- **Horizontal listing strip** — scroll through the active result set under the
+- **Horizontal listing strip**: scroll through the active result set under the
   map. Active card auto-scrolls into view.
-- **Mortgage calculator** — US conventional mortgage with PMI when LTV > 80%,
+- **Mortgage calculator**: US conventional mortgage with PMI when LTV > 80%,
   matching the backend's `calculate_mortgage` tool.
 
 ## Tech stack
@@ -139,6 +139,17 @@ npm run dev                # http://localhost:5173
 VITE_MAPBOX_TOKEN=pk.eyJ1...
 ```
 
+## Usage
+
+Once both servers are running, open http://localhost:5173 and type a request
+in plain English, for example:
+
+> 3 bedroom homes in Austin under $700k with a short commute
+
+Listings stream in as the agent searches; click a pin on the map or a card in
+the strip to focus a property. Ask a follow-up like "what would the mortgage
+be on the first one?" to get a payment breakdown.
+
 ## How the streaming protocol works
 
 The frontend opens a `POST` to `/chat/stream` and reads NDJSON. The backend
@@ -177,14 +188,14 @@ a post-filter on the `class` field (Repliers' `type` URL param expects
 
 ## Known limitations / next steps
 
-- Listing pagination — only top 5 results are returned per query today; the API
+- Listing pagination: only top 5 results are returned per query today; the API
   supports more but the agent's prompt caps it for UX.
-- No persistence — sessions live in an in-memory `dict` on the backend; restart
+- No persistence: sessions live in an in-memory `dict` on the backend; restart
   drops history. Easy swap to Redis or SQLite.
 - Mapbox bundle is heavy (~700KB minified). Code-splitting the map would shave
   noticeable bytes from the initial JS payload but adds complexity.
 - Some Repliers listing fields (walk score, transit score, school ratings,
-  commute times) are estimated by the model from neighborhood knowledge —
+  commute times) are estimated by the model from neighborhood knowledge,
   consistent across requests because the agent runs at low temperature, but
   not authoritative. Production would call a real walk-score / GreatSchools API.
 
