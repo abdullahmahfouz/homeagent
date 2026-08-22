@@ -81,7 +81,6 @@
   <!-- The hero visual is real chat-turn/listing-card markup now (see .hero-preview),
        not a screenshot, so the LCP element is the headline text, not an image. -->
   <link rel="preload" href="/fonts/geist-latin.woff2" as="font" type="font/woff2" crossorigin fetchpriority="high" />
-  <link rel="preload" href="/fonts/newsreader-latin.woff2" as="font" type="font/woff2" crossorigin fetchpriority="high" />
   <link rel="stylesheet" href="/src/landing/landing.css" />
 </head>
 <body>
@@ -193,29 +192,108 @@
           </div>
         </div>
         </div>
+
+        <!-- Floating accent, not the app UI: a frosted glass chip that reveals a
+             neighborhood photo on hover. Kept visually separate from the
+             window-chrome above (which IS real product markup) so nothing here
+             misrepresents itself as the app. -->
+        <div class="glimpse-card" aria-hidden="true">
+          <img class="glimpse-photo" src="https://picsum.photos/id/1029/480/440" width="480" height="440" alt="" loading="lazy" decoding="async" />
+          <div class="glimpse-content">
+            <span class="glimpse-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            </span>
+            <div class="glimpse-text">
+              <p class="glimpse-title">Cherry Creek</p>
+              <p class="glimpse-sub">$720K &middot; 18 min downtown</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- ══ How it works: staggered vertical flow ══ -->
-  <section id="how" class="how">
+  <!-- ══ How it works: full-bleed vertical split-slider ══
+       Text and photo panes slide vertically in sync; the photo does a slow
+       zoom while active. User-driven (arrows/dots), no autoplay: this is
+       walking someone through the three-step flow, not a marketing loop. -->
+  <section id="how" class="split">
     <div class="wrap">
-      <h2 class="h2 reveal" data-reveal>From a sentence to a shortlist.</h2>
+      <h2 class="h2 h2-tight reveal" data-reveal>From a sentence to a shortlist.</h2>
+    </div>
 
-      <ol class="steps">
-        <li class="step reveal" data-reveal>
-          <h3 class="step-title">Ask</h3>
-          <p class="step-body">Type what you want the way you would say it out loud. Budget, neighborhood, beds, commute, schools.</p>
-        </li>
-        <li class="step reveal" data-reveal data-delay="1">
-          <h3 class="step-title">Watch</h3>
-          <p class="step-body">Every MLS search and mortgage calculation appears as it runs, so you can see what the answer is built on.</p>
-        </li>
-        <li class="step reveal" data-reveal data-delay="2">
-          <h3 class="step-title">Compare</h3>
-          <p class="step-body">Results land on a map and in a scrollable strip. Click a pin to focus a listing, then keep going.</p>
-        </li>
-      </ol>
+    <div class="split-in reveal" data-reveal data-split>
+      <div class="split-pane split-text">
+        <div class="split-text-track">
+          <article class="split-slide is-active">
+            <h3 class="split-slide-title">Ask</h3>
+            <p class="split-slide-body">Type what you want the way you would say it out loud. Budget, neighborhood, beds, commute, schools.</p>
+          </article>
+          <article class="split-slide">
+            <h3 class="split-slide-title">Watch</h3>
+            <p class="split-slide-body">Every MLS search and mortgage calculation appears as it runs, so you can see what the answer is built on.</p>
+          </article>
+          <article class="split-slide">
+            <h3 class="split-slide-title">Compare</h3>
+            <p class="split-slide-body">Results land on a map and in a scrollable strip. Click a pin to focus a listing, then keep going.</p>
+          </article>
+        </div>
+
+        <div class="split-dots" role="tablist" aria-label="How it works, steps">
+          <button type="button" class="split-dot is-active" data-split-dot aria-label="Step 1: Ask" aria-selected="true"></button>
+          <button type="button" class="split-dot" data-split-dot aria-label="Step 2: Watch" aria-selected="false"></button>
+          <button type="button" class="split-dot" data-split-dot aria-label="Step 3: Compare" aria-selected="false"></button>
+        </div>
+      </div>
+
+      <div class="split-pane split-media" aria-hidden="true">
+        <div class="split-media-track">
+          <div class="split-media-slide is-active" style="background-image:url(/img/app-overview.jpg)"></div>
+          <div class="split-media-slide" style="background-image:url(/img/tool-calls.jpg);background-position:top center"></div>
+          <div class="split-media-slide" style="background-image:url(/img/map-pins.jpg)"></div>
+        </div>
+        <div class="split-scrim"></div>
+      </div>
+
+      <div class="split-arrows">
+        <button type="button" class="split-arrow" data-split-prev aria-label="Previous step">
+          <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true" style="transform:rotate(180deg)"><path d="M12 16.5a1.2 1.2 0 0 1-.85-.35l-6-6a1.2 1.2 0 1 1 1.7-1.7L12 13.6l5.15-5.15a1.2 1.2 0 1 1 1.7 1.7l-6 6a1.2 1.2 0 0 1-.85.35Z" fill="currentColor"/></svg>
+        </button>
+        <button type="button" class="split-arrow" data-split-next aria-label="Next step">
+          <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16.5a1.2 1.2 0 0 1-.85-.35l-6-6a1.2 1.2 0 1 1 1.7-1.7L12 13.6l5.15-5.15a1.2 1.2 0 1 1 1.7 1.7l-6 6a1.2 1.2 0 0 1-.85.35Z" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ Search by neighborhood: hover-swapped full-bleed photo ══
+       A name list on the left; hovering (or focusing, or tapping) one
+       crossfades a full-bleed photo behind it. Neighborhoods match the
+       cities already named in the hero example (Austin, Denver). -->
+  <section id="neighborhoods" class="explore">
+    <div class="wrap">
+      <div class="explore-in reveal" data-reveal data-explore>
+        <div class="explore-media" aria-hidden="true">
+          <div class="explore-media-slide is-active" style="background-image:url(https://picsum.photos/id/1036/1600/1000)"></div>
+          <div class="explore-media-slide" style="background-image:url(https://picsum.photos/id/1043/1600/1000)"></div>
+          <div class="explore-media-slide" style="background-image:url(https://picsum.photos/id/1048/1600/1000)"></div>
+          <div class="explore-media-slide" style="background-image:url(https://picsum.photos/id/1039/1600/1000)"></div>
+          <div class="explore-grain"></div>
+          <div class="explore-scrim"></div>
+        </div>
+
+        <div class="explore-list-wrap">
+          <h2 class="h2 h2-tight" style="color:var(--over-dark-ink)">Search by neighborhood.</h2>
+          <p class="body" style="color:rgba(255,255,255,0.72); max-width:38ch">Point HomeAgent at a place instead of a price.</p>
+
+          <ul class="explore-list">
+            <li><button type="button" class="explore-item is-active" data-explore-item>Cherry Creek<span class="explore-item-meta">Denver</span></button></li>
+            <li><button type="button" class="explore-item" data-explore-item>Zilker<span class="explore-item-meta">Austin</span></button></li>
+            <li><button type="button" class="explore-item" data-explore-item>South Congress<span class="explore-item-meta">Austin</span></button></li>
+            <li><button type="button" class="explore-item" data-explore-item>Bouldin Creek<span class="explore-item-meta">Austin</span></button></li>
+          </ul>
+        </div>
+      </div>
     </div>
   </section>
 
