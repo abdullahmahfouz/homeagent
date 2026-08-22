@@ -1253,6 +1253,81 @@ button { font: inherit; color: inherit; background: none; border: none; }
   .view-tab { padding: 5px 10px; font-size: 12px; }
 }
 
+/* ── Contact widget ─────────────────────────────────────────────────────
+   Fixed bottom-left corner button. Neutral surface/border/ink tokens only -
+   this is a utility control, not a brand moment, so it carries no accent
+   color. */
+.contact-widget {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 60;
+}
+/* The chat input bar sits at the literal bottom of the viewport below this
+   breakpoint (mobileView 'chat'), so the fixed corner button needs to clear
+   it rather than sit on top of the textarea. */
+@media (max-width: 767px) {
+  .contact-widget { bottom: 84px; }
+}
+.contact-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  color: var(--ink-dim);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease, transform 0.12s ease;
+}
+.contact-btn svg { width: 17px; height: 17px; }
+.contact-btn:hover { color: var(--ink); background: var(--surface-2); }
+.contact-btn:active { transform: scale(0.94); }
+
+.contact-pop {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 10px);
+  width: max-content;
+  max-width: min(78vw, 300px);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-lg);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: contactPopIn 0.16s cubic-bezier(0.2,0.8,0.2,1) both;
+}
+@keyframes contactPopIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.contact-pop-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  color: var(--ink);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background-color 0.15s ease;
+}
+.contact-pop-link:hover { background: var(--surface-2); }
+.contact-pop-icon {
+  width: 16px; height: 16px;
+  flex-shrink: 0;
+  color: var(--ink-dim);
+  display: flex;
+}
+
 /* ── Reduced motion ──────────────────────────────────────────────────────
    Every animation in this file is either feedback (a control acknowledging
    a press) or arrival (a turn, a tool row, the modal). None of it carries
@@ -1265,7 +1340,8 @@ button { font: inherit; color: inherit; background: none; border: none; }
   .tool-line,
   .modal,
   .modal-overlay,
-  .drawer-backdrop {
+  .drawer-backdrop,
+  .contact-pop {
     animation: none;
   }
 
@@ -1289,6 +1365,8 @@ button { font: inherit; color: inherit; background: none; border: none; }
   .input-shell,
   .view-tab,
   .menu-btn,
+  .contact-btn,
+  .contact-pop-link,
   .field input[type="range"]::-webkit-slider-thumb {
     transition: none;
   }
@@ -1304,6 +1382,7 @@ button { font: inherit; color: inherit; background: none; border: none; }
   .strip-card:hover .strip-img,
   .map-pin:hover,
   .map-pin.active,
+  .contact-btn:active,
   .field input[type="range"]::-webkit-slider-thumb:active {
     transform: none;
   }

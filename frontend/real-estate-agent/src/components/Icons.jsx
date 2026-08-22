@@ -20,6 +20,9 @@ import { XIcon } from '@phosphor-icons/react/dist/csr/X';
 import { ChatTeardropIcon } from '@phosphor-icons/react/dist/csr/ChatTeardrop';
 import { ListIcon } from '@phosphor-icons/react/dist/csr/List';
 import { StarIcon } from '@phosphor-icons/react/dist/csr/Star';
+import { EnvelopeIcon } from '@phosphor-icons/react/dist/csr/Envelope';
+import { GithubLogoIcon } from '@phosphor-icons/react/dist/csr/GithubLogo';
+import { LinkedinLogoIcon } from '@phosphor-icons/react/dist/csr/LinkedinLogo';
 
 const line = { weight: 'bold', size: '100%' };
 const mark = { weight: 'fill', size: '100%' };
@@ -38,4 +41,7 @@ export const Icons = {
   X:        () => <XIcon {...line} />,
   Chat:     () => <ChatTeardropIcon {...line} />,
   Menu:     () => <ListIcon {...line} />,
+  Envelope: () => <EnvelopeIcon {...line} />,
+  Github:   () => <GithubLogoIcon {...line} />,
+  Linkedin: () => <LinkedinLogoIcon {...line} />,
 };

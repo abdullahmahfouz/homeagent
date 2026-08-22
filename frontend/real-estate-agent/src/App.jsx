@@ -11,6 +11,7 @@ import { MortgageModal } from "./components/MortgageModal.jsx";
 import { AssistantTurn } from "./components/AssistantTurn.jsx";
 import { StripCard } from "./components/StripCard.jsx";
 import { ChatHistory } from "./components/ChatHistory.jsx";
+import { ContactWidget } from "./components/ContactWidget.jsx";
 import "./styles.css";
 
 const SUGGESTIONS = [
@@ -446,6 +447,8 @@ export default function HomeAgent() {
       {mortgageModal && (
         <MortgageModal property={mortgageModal} onClose={() => setMortgageModal(null)}/>
       )}
+
+      <ContactWidget/>
     </div>
   );
 }

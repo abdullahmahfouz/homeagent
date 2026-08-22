@@ -5,18 +5,15 @@ import { fileURLToPath } from 'node:url'
 
 const here = (p) => fileURLToPath(new URL(p, import.meta.url))
 
-// Mirrors the production routing FastAPI does over dist/: landing page at
-// the site root, chat app shell at /app. Without this, `vite dev` serves
-// index.html at / (Vite's default for a bare request), which would make the
-// app the first thing a local dev sees instead of the landing page.
+// Mirrors the production routing FastAPI does over dist/: the chat app is
+// the site's front door at both / and /app. There is no separate marketing
+// landing page - landing.html still exists in the tree but is unrouted.
 function devRootRoutes() {
   return {
     name: 'homeagent-dev-root-routes',
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
-        if (req.url === '/') {
-          req.url = '/landing.html'
-        } else if (req.url === '/app' || req.url === '/app/') {
+        if (req.url === '/' || req.url === '/app' || req.url === '/app/') {
           req.url = '/index.html'
         }
         next()
