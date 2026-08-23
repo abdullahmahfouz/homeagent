@@ -329,14 +329,17 @@ if FRONTEND_DIST.is_dir():
 
     @app.get("/{full_path:path}")
     def serve_spa(full_path: str):
-        # The chat app is the site's front door, at both / and /app. There is
-        # no separate marketing landing page. Top-level files (favicon,
-        # vite.svg, etc.) served directly; otherwise fall back to the app
-        # shell. Resolve and confine to dist/ so a traversal path can't read
-        # the filesystem.
+        # The chat app is the site's front door, at both / and /app. The
+        # standalone Contact page lives at /contact. Top-level files
+        # (favicon, vite.svg, etc.) served directly; otherwise fall back to
+        # the app shell. Resolve and confine to dist/ so a traversal path
+        # can't read the filesystem.
         index = FRONTEND_DIST / "index.html"
+        contact = FRONTEND_DIST / "landing.html"
         if not full_path or full_path == "app" or full_path.startswith("app/"):
             return FileResponse(index)
+        if full_path == "contact" or full_path.startswith("contact/"):
+            return FileResponse(contact)
         try:
             candidate = (FRONTEND_DIST / full_path).resolve()
             if candidate.is_file() and candidate.is_relative_to(FRONTEND_DIST.resolve()):

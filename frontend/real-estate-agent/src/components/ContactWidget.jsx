@@ -39,6 +39,9 @@ export function ContactWidget() {
             <span className="contact-pop-icon"><Icons.Linkedin/></span>
             Connect on LinkedIn
           </a>
+          <a className="contact-pop-link contact-pop-more" href="/contact" role="menuitem">
+            Full contact page
+          </a>
         </div>
       )}
       <button

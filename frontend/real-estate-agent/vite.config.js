@@ -6,8 +6,8 @@ import { fileURLToPath } from 'node:url'
 const here = (p) => fileURLToPath(new URL(p, import.meta.url))
 
 // Mirrors the production routing FastAPI does over dist/: the chat app is
-// the site's front door at both / and /app. There is no separate marketing
-// landing page - landing.html still exists in the tree but is unrouted.
+// the site's front door at both / and /app, and the standalone Contact page
+// is served at /contact.
 function devRootRoutes() {
   return {
     name: 'homeagent-dev-root-routes',
@@ -15,6 +15,8 @@ function devRootRoutes() {
       server.middlewares.use((req, res, next) => {
         if (req.url === '/' || req.url === '/app' || req.url === '/app/') {
           req.url = '/index.html'
+        } else if (req.url === '/contact' || req.url === '/contact/') {
+          req.url = '/landing.html'
         }
         next()
       })
@@ -34,7 +36,7 @@ export default defineConfig({
       input: {
         // The chat app shell, served at /app by the FastAPI static fallback.
         main: here('index.html'),
-        // Marketing page, served at / (the site root) by the FastAPI static fallback.
+        // Contact page, served at /contact by the FastAPI static fallback.
         landing: here('landing.html'),
       },
     },
