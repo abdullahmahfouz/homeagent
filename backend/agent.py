@@ -462,7 +462,7 @@ def main():
         try:
             response, history, _ = run_agent(client, user_input, history)
         except Exception as e:
-            print(f"\n❌  Error: {e}\n")
+            print(f"\n  Error: {e}\n")
             continue
 
         print(f"\nHomeAgent:\n{response}\n")
