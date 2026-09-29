@@ -22,7 +22,7 @@ export function ListingCard({ prop, index, active, onClick }) {
         {typeof index === 'number' && <div className="listing-rank">{pad2(index + 1)}</div>}
         {prop.score != null && (
           <div className="listing-score">
-            <span className="star">★</span>{prop.score}
+            <span className="star"><Icons.Star/></span>{prop.score}
           </div>
         )}
       </div>

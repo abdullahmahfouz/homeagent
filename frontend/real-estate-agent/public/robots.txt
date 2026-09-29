@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /chat
+Disallow: /health
+Disallow: /usage
+
+# TODO: once deployed, add the production sitemap:
+# Sitemap: https://example.com/sitemap.xml

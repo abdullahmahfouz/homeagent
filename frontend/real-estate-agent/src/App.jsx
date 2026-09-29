@@ -11,6 +11,7 @@ import { MortgageModal } from "./components/MortgageModal.jsx";
 import { AssistantTurn } from "./components/AssistantTurn.jsx";
 import { StripCard } from "./components/StripCard.jsx";
 import { ChatHistory } from "./components/ChatHistory.jsx";
+import { ContactWidget } from "./components/ContactWidget.jsx";
 import "./styles.css";
 
 const SUGGESTIONS = [
@@ -20,21 +21,21 @@ const SUGGESTIONS = [
   { icon: <Icons.Map/>,      title: "Nashville detached",      text: "3-bed detached in East Nashville under $700k" },
 ];
 
-const THINK_STEPS = ["Querying MLS", "Pulling listings", "Calculating scores", "Ranking results"];
-
-function ThinkingBubble({ step }) {
+// One honest label. This shows only between sending and the first streamed
+// event, when the agent has genuinely not decided what to call yet; once it
+// has, real tool rows replace it. Nothing here is on a timer pretending to
+// be progress.
+function ThinkingBubble() {
   return (
     <div className="thinking">
       <div className="think-dots"><span/><span/><span/></div>
-      <span>{step || "Thinking"}</span>
+      <span>Thinking</span>
     </div>
   );
 }
 
-const greeting = () => {
-  const h = new Date().getHours();
-  return h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening';
-};
+const prefersReducedMotion = () =>
+  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 // ─── Sessions bootstrap ──────────────────────────────────────────────────────
 function bootstrapSessions() {
@@ -60,7 +61,6 @@ export default function HomeAgent() {
 
   const [input, setInput]                       = useState('');
   const [loading, setLoading]                   = useState(false);
-  const [thinkStep, setThinkStep]               = useState('');
   const [mortgageModal, setMortgageModal]       = useState(null);
   const [historyDrawerOpen, setHistoryDrawerOpen] = useState(false);
   const [mobileView, setMobileView]             = useState('chat'); // 'chat' | 'map'
@@ -108,7 +108,9 @@ export default function HomeAgent() {
   useEffect(() => { saveCurrentId(currentSessionId); }, [currentSessionId]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({
+      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+    });
   }, [messages, loading]);
 
   // ─── Session ops ──────────────────────────────────────────────────────────
@@ -164,13 +166,6 @@ export default function HomeAgent() {
     setMessages(prev => [...prev, { role: 'user', content }]);
     setLoading(true);
 
-    let stepIdx = 0;
-    setThinkStep(THINK_STEPS[0]);
-    const stepInterval = setInterval(() => {
-      stepIdx = (stepIdx + 1) % THINK_STEPS.length;
-      setThinkStep(THINK_STEPS[stepIdx]);
-    }, 1100);
-
     let streamingText = "";
     let messageStarted = false;
     const toolEvents = [];
@@ -179,7 +174,6 @@ export default function HomeAgent() {
     const ensureMessage = () => {
       if (messageStarted || !isAlive()) return;
       messageStarted = true;
-      clearInterval(stepInterval);
       setLoading(false);
       setMessages(prev => [...prev, {
         role: 'assistant', content: "", streaming: true, toolListings: [], toolEvents: [...toolEvents],
@@ -215,7 +209,6 @@ export default function HomeAgent() {
           ensureMessage();
           patchLast({ content: streamingText });
         } else if (event.type === "done") {
-          clearInterval(stepInterval);
           setLoading(false);
           if (event.session_id && isAlive()) setServerSessionId(event.session_id);
 
@@ -245,10 +238,12 @@ export default function HomeAgent() {
         }
       }, { sessionId: serverSessionId });
     } catch (err) {
-      clearInterval(stepInterval);
       setLoading(false);
       if (!isAlive()) return;
-      const fail = "I couldn't reach the local agent. Make sure the API is running on port 8000.\n<<<FOLLOWUPS:[\"Try again\",\"Check connection\"]>>>";
+      // Rate-limit / budget / size errors carry their own copy from the server.
+      const fail = err?.userFacing
+        ? `${err.message}\n<<<FOLLOWUPS:["Try again later","What can HomeAgent do?"]>>>`
+        : "I couldn't reach the local agent. Make sure the API is running on port 8000.\n<<<FOLLOWUPS:[\"Try again\",\"Check connection\"]>>>";
       setMessages(prev => {
         const last = prev[prev.length - 1];
         if (last && last.role === 'assistant' && last.streaming) {
@@ -282,15 +277,11 @@ export default function HomeAgent() {
           <Icons.Menu/>
         </button>
 
-        <div className="brand">
+        <a className="brand" href="/">
           <span className="brand-mark"><Icons.Logo/></span>
           <span className="brand-name">HomeAgent</span>
-          <span className="brand-tag">beta</span>
-        </div>
+        </a>
 
-        <div className="top-meta hide-mobile">
-          <span className="dot"/> Live MLS · Repliers
-        </div>
         {properties.length > 0 && (
           <div className="top-meta count-chip hide-mobile">
             {properties.length} listing{properties.length === 1 ? '' : 's'}
@@ -320,7 +311,6 @@ export default function HomeAgent() {
               Mortgage
             </button>
           )}
-          <div className="avatar-chip hide-tight" title="Demo session">AM</div>
         </div>
       </header>
 
@@ -346,11 +336,12 @@ export default function HomeAgent() {
             <div className="welcome">
               <div className="welcome-inner">
                 <h1 className="greeting">
-                  Good {greeting()}.<br/>
-                  Where are you looking <span className="accent">today</span>?
+                  Where are you looking?
                 </h1>
                 <p className="greeting-sub">
-                  Conversational property research powered by live US MLS data. Describe your search in plain English — budget, location, lifestyle — and I'll pull ranked listings, plot them on the map, and price out the mortgage.
+                  Describe the home you want the way you would say it out loud.
+                  I search live MLS listings, rank what fits, map them, and price
+                  the monthly payment.
                 </p>
                 <div className="quick-grid">
                   {SUGGESTIONS.map((s, i) => (
@@ -387,12 +378,12 @@ export default function HomeAgent() {
               {loading && (
                 <div className="turn">
                   <div className="assistant-row">
-                    <div className="avatar"><Icons.Spark/></div>
+                    <div className="avatar"><Icons.Logo/></div>
                     <div className="assistant-body">
                       <div className="assistant-name">
                         HomeAgent <span className="stamp">working…</span>
                       </div>
-                      <ThinkingBubble step={thinkStep}/>
+                      <ThinkingBubble/>
                     </div>
                   </div>
                 </div>
@@ -407,7 +398,7 @@ export default function HomeAgent() {
                 <textarea
                   ref={textareaRef}
                   className="chat-input"
-                  placeholder="Ask about Austin, Tampa, Charlotte, Nashville, Denver…"
+                  placeholder="Ask about a city, a budget, a commute"
                   value={input}
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={handleKey}
@@ -456,6 +447,8 @@ export default function HomeAgent() {
       {mortgageModal && (
         <MortgageModal property={mortgageModal} onClose={() => setMortgageModal(null)}/>
       )}
+
+      <ContactWidget/>
     </div>
   );
 }

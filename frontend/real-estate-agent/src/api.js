@@ -3,6 +3,22 @@
 // Override with VITE_API_URL if you ever split the services again.
 const API_URL = import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? "http://localhost:8000" : "");
 
+// The backend answers 429 (rate limited) / 503 (daily budget) / 413 (message too
+// long) with a friendly `detail` string. Surface it verbatim instead of the
+// generic "can't reach the agent" fallback.
+async function limitError(res) {
+  let detail = "";
+  try {
+    const body = await res.json();
+    detail = body?.detail || body?.error || "";
+  } catch {}
+  if (!detail) return null;
+  const err = new Error(detail);
+  err.status = res.status;
+  err.userFacing = true;
+  return err;
+}
+
 // Non-streaming — kept for parity / debugging.
 export async function sendMessage(message, sessionId = null) {
   const res = await fetch(`${API_URL}/chat`, {
@@ -21,7 +37,8 @@ export async function streamMessage(message, onEvent, { sessionId = null } = {})
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ message, session_id: sessionId }),
   });
-  if (!res.ok || !res.body) throw new Error(`stream failed: ${res.status}`);
+  if (!res.ok) throw (await limitError(res)) || new Error(`stream failed: ${res.status}`);
+  if (!res.body) throw new Error(`stream failed: ${res.status}`);
 
   const reader = res.body.getReader();
   const decoder = new TextDecoder();

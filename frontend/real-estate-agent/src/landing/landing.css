@@ -1,0 +1,294 @@
+@import '../theme.css';
+
+/* ═══════════════════════════════════════════════════════════════════════
+   HomeAgent - Contact page
+   Native CSS. Fixed dark palette per the reference this was built from -
+   not gated on prefers-color-scheme, since the brief was a specific
+   near-black + teal look, not an auto light/dark page.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --gut: clamp(1.25rem, 4vw, 2.5rem);
+
+  /* fixed dark palette, overriding theme.css's light-default and its own
+     prefers-color-scheme:dark block unconditionally (same selector, later
+     in the cascade wins) - this page is dark-only by design. */
+  --bg:            #0b0c0e;
+  --surface:       #131518;
+  --surface-2:     #1a1d21;
+  --border:        rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  --ink:      #f2f3f5;
+  --ink-dim:  #9aa0a6;
+  --ink-faint:#6b7076;
+
+  --accent:      #2fe0c2;
+  --accent-hover:#54e8cd;
+  --accent-ink:  #06110f;
+
+  --icon-bg:     #16233a;
+  --icon-border: rgba(255, 255, 255, 0.12);
+
+  --r-1: 6px;
+  --r-2: 10px;
+  --r-3: 14px;
+  --r-pill: 999px;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100dvh;
+}
+
+a { color: inherit; text-decoration: none; }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: 0.7rem 1.1rem;
+  border-radius: 0 0 var(--r-1) 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.skip:focus { left: 0; }
+
+.wrap {
+  width: 100%;
+  max-width: 1240px;
+  margin-inline: auto;
+  padding-inline: var(--gut);
+}
+.wrap-narrow { max-width: 640px; }
+
+/* ── buttons ────────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  border-radius: var(--r-2);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  padding: 0.8rem 1.5rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.22s var(--ease), transform 0.12s var(--ease);
+}
+.btn-sm { padding: 0.55rem 1.1rem; font-size: 0.875rem; }
+.btn-primary { background: var(--accent); color: var(--accent-ink); }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-primary:active { transform: scale(0.98); }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn { transition: none; }
+  .btn:active { transform: none; }
+}
+
+/* ── nav ────────────────────────────────────────────────────────────── */
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+@supports not (backdrop-filter: blur(1px)) { .nav { background: var(--bg); } }
+
+.nav-in {
+  height: 64px;
+  max-width: 1240px;
+  margin-inline: auto;
+  padding-inline: var(--gut);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.brand { display: inline-flex; align-items: center; gap: 0.5rem; }
+.brand-mark {
+  width: 20px;
+  height: 20px;
+  color: var(--accent);
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+}
+.brand-mark svg { width: 20px; height: 20px; display: block; }
+.brand-name { font-weight: 600; letter-spacing: -0.015em; }
+
+/* ── side dock: fixed icon rail, matches the reference ────────────────── */
+
+.dock {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: none;
+  border-radius: 0 var(--r-2) var(--r-2) 0;
+}
+.dock-link {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-dim);
+  border-radius: var(--r-1);
+  transition: color 0.2s var(--ease), background-color 0.2s var(--ease);
+}
+.dock-link:hover { color: var(--ink); background: var(--surface-2); }
+
+@media (max-width: 640px) { .dock { display: none; } }
+
+/* ── contact ────────────────────────────────────────────────────────── */
+
+.contact { padding-block: clamp(3rem, 8vw, 6rem) clamp(4rem, 10vw, 7rem); }
+
+.contact-title {
+  font-family: var(--font-ui);
+  font-size: clamp(2.25rem, 5vw, 3.25rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--accent);
+  text-align: center;
+  margin-bottom: clamp(2.5rem, 6vw, 4rem);
+}
+
+.contact-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.contact-card {
+  border: 1px solid var(--border);
+  border-radius: var(--r-3);
+  background: var(--surface);
+  padding: clamp(1.5rem, 3vw, 2rem);
+}
+
+.contact-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-dim);
+  background: var(--icon-bg);
+  border: 1px solid var(--icon-border);
+  border-radius: var(--r-2);
+  margin-bottom: 1.25rem;
+}
+
+.contact-card-title {
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin-bottom: 0.5rem;
+}
+
+.contact-card-sub {
+  color: var(--ink-dim);
+  line-height: 1.5;
+  margin-bottom: 1.25rem;
+}
+
+.contact-link {
+  color: var(--accent);
+  font-weight: 500;
+  transition: color 0.2s var(--ease);
+}
+.contact-link:hover { color: var(--accent-hover); text-decoration: underline; }
+
+/* ── scroll reveal ──────────────────────────────────────────────────────
+   Justification: cards enter in sequence on load, establishing reading
+   order top-to-bottom. Nothing loops, nothing decorative. Gated on .js so
+   the page is fully visible if the script never runs. */
+
+.js [data-reveal] {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
+}
+.js [data-reveal][data-delay="1"] { transition-delay: 0.08s; }
+.js [data-reveal][data-delay="2"] { transition-delay: 0.16s; }
+.js [data-reveal].is-in { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .js [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+    transition-delay: 0s;
+  }
+}
+
+/* ── footer ─────────────────────────────────────────────────────────── */
+
+.foot {
+  border-top: 1px solid var(--border);
+  padding-block: 2rem;
+}
+.foot-in {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.foot-links {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  font-size: 0.9375rem;
+  color: var(--ink-dim);
+}
+.foot-links a { transition: color 0.2s var(--ease); }
+.foot-links a:hover { color: var(--ink); }
+
+/* ── responsive ─────────────────────────────────────────────────────── */
+
+@media (max-width: 767px) {
+  .foot-in { flex-direction: column; align-items: flex-start; }
+  .foot-links { gap: 0.5rem 1.5rem; }
+  .foot-links a, .brand {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .nav .btn-sm { min-height: 44px; }
+}

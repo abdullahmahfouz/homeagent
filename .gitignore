@@ -10,3 +10,4 @@ build/
 *.pyo
 *.env
 *.env.local  
+.gstack/

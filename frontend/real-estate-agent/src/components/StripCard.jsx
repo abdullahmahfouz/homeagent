@@ -36,7 +36,7 @@ export function StripCard({ prop, active, onClick }) {
           <div className="strip-img-fallback"><Icons.Home/></div>
         )}
         {prop.score != null && (
-          <div className="strip-score"><span className="star">★</span>{prop.score}</div>
+          <div className="strip-score"><span className="star"><Icons.Star/></span>{prop.score}</div>
         )}
       </div>
       <div className="strip-body">
@@ -44,7 +44,9 @@ export function StripCard({ prop, active, onClick }) {
         <div className="strip-addr">{prop.address}</div>
         <div className="strip-neigh">{prop.neighborhood}</div>
         <div className="strip-meta">
-          {prop.beds}bd · {prop.baths}ba{prop.sqft ? ` · ${prop.sqft.toLocaleString()}sf` : ''}
+          <span>{prop.beds} bd</span>
+          <span>{prop.baths} ba</span>
+          {prop.sqft ? <span>{prop.sqft.toLocaleString()} sf</span> : null}
         </div>
       </div>
     </button>
